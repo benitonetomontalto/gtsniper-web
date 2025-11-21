@@ -82,6 +82,10 @@ app.include_router(diagnostic_router, prefix="/api/v1")
 from app.api.iqoption_routes import router as iqoption_router
 app.include_router(iqoption_router, prefix="/api/v1")
 
+# Registrar rotas de Forex
+from app.api.forex_routes import router as forex_router
+app.include_router(forex_router, prefix="/api/v1")
+
 # Servir arquivos estáticos (HTML admin e frontend)
 import os
 import sys

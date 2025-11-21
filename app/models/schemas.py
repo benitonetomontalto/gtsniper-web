@@ -133,3 +133,55 @@ class SignalResponse(BaseModel):
     chart_data: List[Candle]
     indicators: dict
     explanation: str
+
+
+# ============================================================================
+# FOREX MODELS
+# ============================================================================
+
+# Forex Trading Signal (com Stop Loss e Take Profit)
+class ForexSignal(BaseModel):
+    signal_id: str
+    timestamp: datetime
+    pair: str  # Ex: "EURUSD", "GBPUSD"
+    direction: Literal["BUY", "SELL"]
+    entry_price: float
+    stop_loss: float
+    take_profit: float
+    risk_reward_ratio: float  # Ex: 1:2, 1:3
+    timeframe: str  # Ex: "M5", "M15", "H1", "H4"
+    pattern: Optional[str] = None  # Ex: "Breakout", "Reversal", "Trend"
+    confluences: List[str] = []  # Confluências (suporte/resistência, médias, etc)
+    confidence: float = Field(ge=0, le=100)
+    pips_target: float  # Quantidade de pips esperados
+    pips_stop: float  # Quantidade de pips do stop loss
+
+
+# Forex Pair Info
+class ForexPair(BaseModel):
+    symbol: str  # Ex: "EURUSD"
+    name: str  # Ex: "Euro vs US Dollar"
+    is_active: bool = True
+    pip_value: float = 0.0001  # Valor de 1 pip
+    spread: Optional[float] = None  # Spread atual
+
+
+# Forex Scan Configuration
+class ForexScanConfig(BaseModel):
+    pairs: Optional[List[str]] = None  # Pares específicos ou todos
+    timeframes: List[str] = ["M5", "M15", "H1"]  # Timeframes para análise
+    min_risk_reward: float = Field(default=1.5, ge=1.0)  # Mínimo R:R
+    use_trend_filter: bool = True
+    use_support_resistance: bool = True
+    only_major_pairs: bool = True  # Apenas pares principais (EUR, GBP, USD, etc)
+
+
+# Forex Analysis Response
+class ForexAnalysisResponse(BaseModel):
+    pair: str
+    current_price: float
+    trend: str  # "uptrend", "downtrend", "sideways"
+    support_levels: List[float]
+    resistance_levels: List[float]
+    recommendation: Optional[str] = None
+    signals: List[ForexSignal]
