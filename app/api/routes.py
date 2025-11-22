@@ -100,7 +100,7 @@ async def login(request: LoginRequest):
         try:
             requested_account_type = getattr(request, "iqoption_account_type", None)
 
-            # Tenta conectar com o tipo de conta especificado
+            # Tenta conectar com o tipo de conta especificado (SEM FALLBACK AUTOMÁTICO)
             connected, message = await session_manager.connect_user(
                 username=request.username,
                 email=request.iqoption_email,
@@ -110,22 +110,7 @@ async def login(request: LoginRequest):
             iq_option_connected = connected
             iq_option_message = message
 
-            # Se falhou e um tipo específico foi solicitado, tenta o outro tipo automaticamente
-            if not connected and requested_account_type:
-                alternative_type = "PRACTICE" if requested_account_type.upper() == "REAL" else "REAL"
-                print(f"[LOGIN] Primeira tentativa ({requested_account_type}) falhou. Tentando com {alternative_type}...")
-
-                connected, message = await session_manager.connect_user(
-                    username=request.username,
-                    email=request.iqoption_email,
-                    password=request.iqoption_password,
-                    account_type=alternative_type
-                )
-                iq_option_connected = connected
-                if connected:
-                    iq_option_message = f"Conectado com sucesso usando conta {alternative_type} (tipo {requested_account_type} não disponível)"
-                else:
-                    iq_option_message = f"Falha em ambos os tipos de conta. REAL: {iq_option_message} | {alternative_type}: {message}"
+            print(f"[LOGIN] Conexão IQ Option - Tipo solicitado: {requested_account_type}, Sucesso: {connected}")
 
             client = session_manager.get_client(request.username)
             if client and client.awaiting_two_factor:
