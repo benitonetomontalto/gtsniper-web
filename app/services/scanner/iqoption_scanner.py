@@ -70,10 +70,17 @@ class IQOptionScanner:
             self.is_running = False
             return
 
-        # Determinar quais timeframes usar
-        timeframes_to_scan = self.config.timeframes if self.config.timeframes else [self.config.timeframe]
+        # Determinar quais timeframes usar - RETROCOMPATIBILIDADE
+        # Se timeframes for None ou lista vazia, usa timeframe primário
+        if self.config.timeframes and len(self.config.timeframes) > 0:
+            timeframes_to_scan = self.config.timeframes
+            print(f"[IQOptionScanner] Usando MULTIPLOS timeframes: {timeframes_to_scan}")
+        else:
+            timeframes_to_scan = [self.config.timeframe]
+            print(f"[IQOptionScanner] Usando timeframe UNICO (fallback): {timeframes_to_scan}")
+
         print(f"[IQOptionScanner] Iniciando scan em {len(pairs)} pares OTC")
-        print(f"[IQOptionScanner] Timeframes: {timeframes_to_scan} minutos")
+        print(f"[IQOptionScanner] Timeframes a escanear: {timeframes_to_scan} minutos")
 
         while self.is_running:
             try:
@@ -208,6 +215,18 @@ class IQOptionScanner:
             if not isinstance(candles, pd.DataFrame):
                 candles = pd.DataFrame(candles)
 
+            # Validar dados dos candles
+            if candles.empty or len(candles) < 5:
+                print(f"[IQOptionScanner] Candles insuficientes para {symbol} {timeframe}M: {len(candles)} candles")
+                return None
+
+            # Validar colunas necessárias
+            required_columns = ['open', 'high', 'low', 'close', 'volume']
+            missing_columns = [col for col in required_columns if col not in candles.columns]
+            if missing_columns:
+                print(f"[IQOptionScanner] Candles sem colunas necessárias para {symbol}: {missing_columns}")
+                return None
+
             # Generate signal using signal generator (synchronous)
             # Criar uma config temporária com o timeframe específico
             from copy import copy
@@ -222,7 +241,9 @@ class IQOptionScanner:
             return signal
 
         except Exception as e:
-            print(f"[IQOptionScanner] Erro ao analisar {pair.get('symbol', '?')}: {e}")
+            print(f"[IQOptionScanner] ERRO ao analisar {pair.get('symbol', '?')} {timeframe}M: {type(e).__name__}: {e}")
+            import traceback
+            traceback.print_exc()  # Log completo do erro
             return None
 
     def get_latest_signals(self) -> List[TradingSignal]:

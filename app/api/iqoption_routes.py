@@ -323,7 +323,8 @@ async def start_iqoption_scanner(
 
         print(f"[START_SCANNER] ========================================")
         print(f"[START_SCANNER] Usuario: {username}")
-        print(f"[START_SCANNER] Timeframe: {config.timeframe} minutos")
+        print(f"[START_SCANNER] Timeframe primario: {config.timeframe} minutos")
+        print(f"[START_SCANNER] Timeframes lista: {config.timeframes}")  # LOG ADICIONADO
         print(f"[START_SCANNER] Sensitivity: {config.sensitivity}")
         print(f"[START_SCANNER] Only OTC: {config.only_otc}")
         print(f"[START_SCANNER] Only Open Market: {config.only_open_market}")
