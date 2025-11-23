@@ -70,7 +70,10 @@ class IQOptionScanner:
             self.is_running = False
             return
 
-        print(f"[IQOptionScanner] Iniciando scan em {len(pairs)} pares OTC com timeframe {self.config.timeframe}min...")
+        # Determinar quais timeframes usar
+        timeframes_to_scan = self.config.timeframes if self.config.timeframes else [self.config.timeframe]
+        print(f"[IQOptionScanner] Iniciando scan em {len(pairs)} pares OTC")
+        print(f"[IQOptionScanner] Timeframes: {timeframes_to_scan} minutos")
 
         while self.is_running:
             try:
@@ -88,20 +91,27 @@ class IQOptionScanner:
                     if not self.is_running:
                         break
 
-                    async with self._semaphore:
-                        try:
-                            # Add timeout to prevent hanging requests
-                            result = await asyncio.wait_for(
-                                self._scan_pair(pair),
-                                timeout=10.0  # 10 second timeout per pair
-                            )
-                            if isinstance(result, TradingSignal):
-                                new_signals.append(result)
-                                self.latest_signals[result.symbol] = result
-                        except asyncio.TimeoutError:
-                            print(f"[IQOptionScanner] Timeout ao escanear {pair.get('symbol', '?')}")
-                        except Exception as e:
-                            print(f"[IQOptionScanner] Erro ao escanear {pair.get('symbol', '?')}: {e}")
+                    # Escanear cada timeframe configurado
+                    for timeframe in timeframes_to_scan:
+                        if not self.is_running:
+                            break
+
+                        async with self._semaphore:
+                            try:
+                                # Add timeout to prevent hanging requests
+                                result = await asyncio.wait_for(
+                                    self._scan_pair(pair, timeframe),
+                                    timeout=10.0  # 10 second timeout per pair
+                                )
+                                if isinstance(result, TradingSignal):
+                                    new_signals.append(result)
+                                    # Usar chave única: símbolo + timeframe
+                                    signal_key = f"{result.symbol}_{result.timeframe}M"
+                                    self.latest_signals[signal_key] = result
+                            except asyncio.TimeoutError:
+                                print(f"[IQOptionScanner] Timeout ao escanear {pair.get('symbol', '?')} {timeframe}M")
+                            except Exception as e:
+                                print(f"[IQOptionScanner] Erro ao escanear {pair.get('symbol', '?')} {timeframe}M: {e}")
 
                 # Log new signals
                 if new_signals:
@@ -163,12 +173,13 @@ class IQOptionScanner:
             print(f"[IQOptionScanner] Erro ao buscar pares OTC: {e}")
             return []
 
-    async def _scan_pair(self, pair: Dict) -> Optional[TradingSignal]:
+    async def _scan_pair(self, pair: Dict, timeframe: int) -> Optional[TradingSignal]:
         """
         Scan a single OTC pair for signals
 
         Args:
             pair: Trading pair info
+            timeframe: Timeframe in minutes to scan
 
         Returns:
             Trading signal if found
@@ -178,9 +189,9 @@ class IQOptionScanner:
 
             # Get candles from IQ Option
             # Convert timeframe from minutes to seconds for IQ Option
-            timeframe_seconds = self.config.timeframe * 60
+            timeframe_seconds = timeframe * 60
 
-            print(f"[IQOptionScanner] Buscando candles para {symbol}: timeframe={self.config.timeframe}min ({timeframe_seconds}s)")
+            print(f"[IQOptionScanner] Buscando candles para {symbol}: timeframe={timeframe}min ({timeframe_seconds}s)")
 
             candles = await self.session_manager.get_user_candles(
                 username=self.username,
@@ -198,7 +209,15 @@ class IQOptionScanner:
                 candles = pd.DataFrame(candles)
 
             # Generate signal using signal generator (synchronous)
-            signal = self.signal_generator.generate_signal(symbol, candles)
+            # Criar uma config temporária com o timeframe específico
+            from copy import copy
+            temp_config = copy(self.config)
+            temp_config.timeframe = timeframe
+
+            # Criar signal generator temporário com timeframe correto
+            from .signal_generator import SignalGenerator
+            temp_generator = SignalGenerator(temp_config)
+            signal = temp_generator.generate_signal(symbol, candles)
 
             return signal
 

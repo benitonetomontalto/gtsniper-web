@@ -70,16 +70,20 @@ class SignalGenerator:
 
         # Detect patterns
         patterns = self.pattern_detector.detect_patterns(df)
+
+        # MODO AGRESSIVO: Se não encontrou padrões, cria um padrão sintético
         if not patterns and self.config.sensitivity == "aggressive":
             last_close = df['close'].iloc[-1]
             last_open = df['open'].iloc[-1]
             pattern_type = 'bos_bullish' if last_close >= last_open else 'bos_bearish'
             pattern = PriceActionPattern(
                 pattern_type=pattern_type,
-                description='Momentum imediato detectado',
+                description='Momentum imediato detectado (Modo Agressivo)',
                 candle_index=len(df) - 1
             )
             patterns = [pattern]
+
+        # MODO MODERADO/CAUTELOSO: Se não encontrou padrões REAIS, retorna None
         elif not patterns:
             return None
 
@@ -97,17 +101,25 @@ class SignalGenerator:
 
         # Determine signal direction
         direction = self._determine_direction(pattern, sr_level, df)
+
+        # MODO AGRESSIVO: Se não determinou direção, usa lógica simples
         if not direction and self.config.sensitivity == "aggressive":
             direction = "CALL" if df['close'].iloc[-1] >= df['close'].iloc[-2] else "PUT"
+
+        # MODO MODERADO/CAUTELOSO: Se não determinou direção clara, retorna None
         if not direction:
             return None
 
         # Apply filters
         filters_ok = self._apply_filters(df, direction)
-        if not filters_ok:
-            if self.config.sensitivity != "aggressive":
-                return None
+
+        # MODO AGRESSIVO: Ignora filtros se falharem
+        if not filters_ok and self.config.sensitivity == "aggressive":
             filters_ok = True  # Força aceitação no modo agressivo
+
+        # MODO MODERADO/CAUTELOSO: Respeita os filtros rigorosamente
+        if not filters_ok:
+            return None
 
         # Calculate confluences
         confluences = self._calculate_confluences(pattern, sr_level, df, direction)
@@ -185,30 +197,45 @@ class SignalGenerator:
         return "CALL"
 
     def _apply_filters(self, df: pd.DataFrame, direction: str) -> bool:
-        """Apply various filters based on configuration - RELAXADO PARA MODO AGRESSIVO"""
+        """Apply various filters based on configuration"""
 
-        # Se sensitivity for aggressive, NAO APLICAR filtros rigorosos
+        # MODO AGRESSIVO: Aceita praticamente tudo
         if self.config.sensitivity == "aggressive":
-            return True  # Aceitar tudo no modo agressivo
+            return True
 
-        # Modo moderate/conservative: aplicar filtros
-        # Volume filter
-        if self.config.use_volume_filter:
-            if not self.indicators.is_volume_increasing(df):
-                return False
-
-        # Volatility filter
-        if self.config.use_volatility_filter:
-            if self.indicators.is_high_volatility(df, threshold=2.0):
-                return False
-
-        # Trend filter
-        if self.config.use_trend_filter:
+        # MODO MODERADO: Aplica filtros básicos
+        if self.config.sensitivity == "moderate":
+            # Trend filter (moderado: evita contra-tendência)
             trend = self.indicators.detect_trend(df)
             if direction == "CALL" and trend == "bearish":
                 return False
             if direction == "PUT" and trend == "bullish":
                 return False
+
+            # Volatility filter (evita alta volatilidade extrema)
+            if self.indicators.is_high_volatility(df, threshold=3.0):  # Threshold mais alto
+                return False
+
+            return True
+
+        # MODO CAUTELOSO/CONSERVATIVE: Aplica filtros RIGOROSOS
+        if self.config.sensitivity == "conservative":
+            # Volume filter (obrigatório)
+            if not self.indicators.is_volume_increasing(df):
+                return False
+
+            # Volatility filter (mais rigoroso)
+            if self.indicators.is_high_volatility(df, threshold=2.0):
+                return False
+
+            # Trend filter (OBRIGATÓRIO - deve estar alinhado)
+            trend = self.indicators.detect_trend(df)
+            if direction == "CALL" and trend != "bullish":
+                return False
+            if direction == "PUT" and trend != "bearish":
+                return False
+
+            return True
 
         return True
 

@@ -93,7 +93,8 @@ class TradingSignal(BaseModel):
 class ScanConfig(BaseModel):
     mode: Literal["manual", "auto"] = "auto"
     symbols: Optional[List[str]] = None
-    timeframe: int = Field(default=5, ge=1, le=60)
+    timeframe: int = Field(default=5, ge=1, le=60)  # Timeframe primário
+    timeframes: Optional[List[int]] = None  # Lista de timeframes para escanear (se None, usa só timeframe)
     sensitivity: Literal["conservative", "moderate", "aggressive"] = "moderate"
     use_volume_filter: bool = True
     use_volatility_filter: bool = True
