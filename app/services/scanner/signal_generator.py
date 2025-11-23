@@ -259,6 +259,36 @@ class SignalGenerator:
             elif direction == "PUT" and macd_line.iloc[-1] < signal_line.iloc[-1]:
                 confluences.append("MACD bearish")
 
+        # Moving Average Crossover (MA 9 x MA 21) confluence
+        ma_cross = self.indicators.check_ma_crossover(df, fast_period=9, slow_period=21)
+        if ma_cross == 'bullish_cross' and direction == "CALL":
+            confluences.append("Cruzamento MA9 x MA21 (ALTA)")
+        elif ma_cross == 'bearish_cross' and direction == "PUT":
+            confluences.append("Cruzamento MA9 x MA21 (BAIXA)")
+        elif ma_cross == 'bullish_aligned' and direction == "CALL":
+            confluences.append("MA9 > MA21 (tendência de alta)")
+        elif ma_cross == 'bearish_aligned' and direction == "PUT":
+            confluences.append("MA9 < MA21 (tendência de baixa)")
+
+        # Stochastic Oscillator confluence
+        k_line, d_line = self.indicators.calculate_stochastic(df, k_period=14, d_period=3)
+        if len(k_line) > 1 and len(d_line) > 1:
+            k_value = k_line.iloc[-1]
+            d_value = d_line.iloc[-1]
+
+            # Oversold zone (< 20) - good for CALL
+            if direction == "CALL" and k_value < 20 and d_value < 20:
+                confluences.append(f"Estocástico em sobrevenda ({k_value:.1f})")
+            # Overbought zone (> 80) - good for PUT
+            elif direction == "PUT" and k_value > 80 and d_value > 80:
+                confluences.append(f"Estocástico em sobrecompra ({k_value:.1f})")
+            # Bullish crossover in oversold zone
+            elif direction == "CALL" and k_value > d_value and k_value < 30:
+                confluences.append(f"Estocástico cruzando para cima ({k_value:.1f})")
+            # Bearish crossover in overbought zone
+            elif direction == "PUT" and k_value < d_value and k_value > 70:
+                confluences.append(f"Estocástico cruzando para baixo ({k_value:.1f})")
+
         return confluences
 
     def _calculate_confidence(

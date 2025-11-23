@@ -129,3 +129,73 @@ class TechnicalIndicators:
         previous_volume = df['volume'].iloc[-period * 2:-period].mean()
 
         return recent_volume > previous_volume * 1.2
+
+    @staticmethod
+    def calculate_stochastic(
+        df: pd.DataFrame,
+        k_period: int = 14,
+        d_period: int = 3,
+        column: str = 'close'
+    ) -> Tuple[pd.Series, pd.Series]:
+        """
+        Calculate Stochastic Oscillator (%K e %D)
+
+        Returns:
+            Tuple[pd.Series, pd.Series]: (%K line, %D line)
+        """
+        # Lowest low and highest high over k_period
+        low_min = df['low'].rolling(window=k_period).min()
+        high_max = df['high'].rolling(window=k_period).max()
+
+        # %K = 100 * (Close - Lowest Low) / (Highest High - Lowest Low)
+        k_percent = 100 * ((df[column] - low_min) / (high_max - low_min))
+
+        # %D = SMA of %K over d_period
+        d_percent = k_percent.rolling(window=d_period).mean()
+
+        return k_percent, d_percent
+
+    @staticmethod
+    def check_ma_crossover(
+        df: pd.DataFrame,
+        fast_period: int = 9,
+        slow_period: int = 21,
+        column: str = 'close'
+    ) -> str:
+        """
+        Check for Moving Average crossover (MA 9 x MA 21)
+
+        Returns:
+            'bullish_cross': Fast MA crossed above Slow MA (CALL signal)
+            'bearish_cross': Fast MA crossed below Slow MA (PUT signal)
+            'none': No crossover
+        """
+        ma_fast = TechnicalIndicators.calculate_sma(df, fast_period, column)
+        ma_slow = TechnicalIndicators.calculate_sma(df, slow_period, column)
+
+        if len(ma_fast) < 2 or len(ma_slow) < 2:
+            return 'none'
+
+        # Current positions
+        fast_current = ma_fast.iloc[-1]
+        slow_current = ma_slow.iloc[-1]
+
+        # Previous positions
+        fast_prev = ma_fast.iloc[-2]
+        slow_prev = ma_slow.iloc[-2]
+
+        # Bullish crossover: MA9 crosses ABOVE MA21
+        if fast_prev <= slow_prev and fast_current > slow_current:
+            return 'bullish_cross'
+
+        # Bearish crossover: MA9 crosses BELOW MA21
+        if fast_prev >= slow_prev and fast_current < slow_current:
+            return 'bearish_cross'
+
+        # Check if MAs are aligned (not crossover but confirmation)
+        if fast_current > slow_current:
+            return 'bullish_aligned'
+        elif fast_current < slow_current:
+            return 'bearish_aligned'
+
+        return 'none'
