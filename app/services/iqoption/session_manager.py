@@ -167,11 +167,20 @@ class IQOptionSessionManager:
             return balance_info.get("balance")
         return balance_info
 
-    async def get_user_pairs(self, username: str):
-        """Get available pairs for a user"""
+    async def get_user_pairs(self, username: str, include_otc: bool = True):
+        """
+        Get available pairs for a user
+
+        Args:
+            username: Username to get pairs for
+            include_otc: If True, includes OTC pairs. If False, only regular market pairs.
+
+        Returns:
+            List of available trading pairs
+        """
         client = self.get_client(username)
         if client:
-            return await client.get_available_pairs(include_otc=True)
+            return await client.get_available_pairs(include_otc=include_otc)
         return []
 
     def get_user_account_type(self, username: str) -> Optional[str]:

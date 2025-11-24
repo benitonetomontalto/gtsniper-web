@@ -156,7 +156,14 @@ class IQOptionScanner:
     async def _get_trading_pairs(self) -> List[Dict]:
         """Get available trading pairs from IQ Option (OTC or regular) honoring scanner config"""
         try:
-            pairs = await self.session_manager.get_user_pairs(self.username)
+            # Determine include_otc flag based on scanner configuration
+            # If only_open_market=True, we want include_otc=False (exclude OTC)
+            # If only_otc=True, we want include_otc=True (include OTC)
+            # Otherwise, include both (include_otc=True by default)
+            include_otc_flag = not self.config.only_open_market
+            print(f"[IQOptionScanner] Solicitando pares com include_otc={include_otc_flag}")
+
+            pairs = await self.session_manager.get_user_pairs(self.username, include_otc=include_otc_flag)
             print(f"[IQOptionScanner] Total de pares recebidos da IQ Option: {len(pairs)}")
 
             # Filter only active pairs
