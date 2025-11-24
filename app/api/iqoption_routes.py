@@ -324,10 +324,19 @@ async def start_iqoption_scanner(
         print(f"[START_SCANNER] ========================================")
         print(f"[START_SCANNER] Usuario: {username}")
         print(f"[START_SCANNER] Timeframe primario: {config.timeframe} minutos")
-        print(f"[START_SCANNER] Timeframes lista: {config.timeframes}")  # LOG ADICIONADO
+        print(f"[START_SCANNER] Timeframes lista: {config.timeframes}")
         print(f"[START_SCANNER] Sensitivity: {config.sensitivity}")
         print(f"[START_SCANNER] Only OTC: {config.only_otc}")
         print(f"[START_SCANNER] Only Open Market: {config.only_open_market}")
+
+        # Log interpretação do filtro de mercado
+        if config.only_otc:
+            print(f"[START_SCANNER] >>> FILTRO: Apenas pares OTC")
+        elif config.only_open_market:
+            print(f"[START_SCANNER] >>> FILTRO: Apenas mercado REGULAR (sem OTC)")
+        else:
+            print(f"[START_SCANNER] >>> FILTRO: Todos os mercados (OTC + Regular)")
+
         print(f"[START_SCANNER] Symbols: {config.symbols}")
         print(f"[START_SCANNER] Nova task criada: {scanner._scan_task}")
         print(f"[START_SCANNER] ========================================")

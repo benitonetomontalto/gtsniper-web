@@ -62,11 +62,11 @@ class IQOptionScanner:
             self.is_running = False
             return
 
-        # Get OTC pairs
-        pairs = await self._get_otc_pairs()
+        # Get trading pairs (OTC or regular based on config)
+        pairs = await self._get_trading_pairs()
 
         if not pairs:
-            print("[IQOptionScanner] Nenhum par OTC disponivel")
+            print("[IQOptionScanner] Nenhum par disponível para escanear")
             self.is_running = False
             return
 
@@ -153,19 +153,30 @@ class IQOptionScanner:
 
         print("[IQOptionScanner] Scan interrompido e estado limpo")
 
-    async def _get_otc_pairs(self) -> List[Dict]:
-        """Get available pairs from IQ Option honoring scanner config"""
+    async def _get_trading_pairs(self) -> List[Dict]:
+        """Get available trading pairs from IQ Option (OTC or regular) honoring scanner config"""
         try:
             pairs = await self.session_manager.get_user_pairs(self.username)
+            print(f"[IQOptionScanner] Total de pares recebidos da IQ Option: {len(pairs)}")
 
             # Filter only active pairs
             active_pairs = [p for p in pairs if p.get("is_active", False)]
+            print(f"[IQOptionScanner] Pares ativos: {len(active_pairs)}")
+
+            # Count OTC vs non-OTC before filtering
+            otc_count = sum(1 for p in active_pairs if p.get("is_otc", False))
+            non_otc_count = len(active_pairs) - otc_count
+            print(f"[IQOptionScanner] Distribuição: {otc_count} OTC, {non_otc_count} Mercado Regular")
 
             # Respect scanner configuration filters
             if self.config.only_otc:
                 active_pairs = [p for p in active_pairs if p.get("is_otc", False)]
+                print(f"[IQOptionScanner] Filtro ONLY_OTC aplicado: {len(active_pairs)} pares")
             elif self.config.only_open_market:
                 active_pairs = [p for p in active_pairs if not p.get("is_otc", False)]
+                print(f"[IQOptionScanner] Filtro ONLY_OPEN_MARKET aplicado: {len(active_pairs)} pares")
+            else:
+                print(f"[IQOptionScanner] SEM filtro de mercado: {len(active_pairs)} pares (OTC + Regular)")
 
             if self.config.symbols:
                 symbols_set = {symbol.upper() for symbol in self.config.symbols}
@@ -173,11 +184,21 @@ class IQOptionScanner:
                     p for p in active_pairs
                     if p.get("symbol", "").upper() in symbols_set
                 ]
+                print(f"[IQOptionScanner] Filtro de símbolos aplicado: {len(active_pairs)} pares")
+
+            # Log alguns exemplos dos pares filtrados
+            if active_pairs:
+                sample_pairs = active_pairs[:5]
+                print(f"[IQOptionScanner] Exemplos de pares a escanear:")
+                for p in sample_pairs:
+                    print(f"  - {p.get('symbol')} (OTC: {p.get('is_otc', False)})")
 
             return active_pairs
 
         except Exception as e:
-            print(f"[IQOptionScanner] Erro ao buscar pares OTC: {e}")
+            print(f"[IQOptionScanner] Erro ao buscar pares: {e}")
+            import traceback
+            traceback.print_exc()
             return []
 
     async def _scan_pair(self, pair: Dict, timeframe: int) -> Optional[TradingSignal]:
