@@ -559,16 +559,37 @@ class IQOptionClient:
                 "digital": "DIGITAL",
             }
 
+            # Contadores para debug
+            total_assets = 0
+            otc_count = 0
+            non_otc_count = 0
+            active_count = 0
+            inactive_count = 0
+
             if assets:
                 for market_key, market_label in market_map.items():
                     market_assets = assets.get(market_key, {})
+                    print(f"[IQ Option] Mercado '{market_key}': {len(market_assets)} assets")
+
                     for asset_name, asset_data in market_assets.items():
+                        total_assets += 1
                         symbol_key = f"{asset_name}:{market_label}"
                         if symbol_key in seen_symbols:
                             continue
 
                         is_open = asset_data.get("open", False)
                         is_otc = "-OTC" in asset_name or "OTC" in asset_name
+
+                        # Contadores
+                        if is_otc:
+                            otc_count += 1
+                        else:
+                            non_otc_count += 1
+
+                        if is_open:
+                            active_count += 1
+                        else:
+                            inactive_count += 1
 
                         if not include_otc and is_otc:
                             continue
@@ -582,7 +603,22 @@ class IQOptionClient:
                         })
                         seen_symbols.add(symbol_key)
 
-            print(f"[IQ Option] Found {len(pairs)} available pairs")
+            print(f"[IQ Option] ========================================")
+            print(f"[IQ Option] RESUMO DOS PARES:")
+            print(f"[IQ Option] Total de assets processados: {total_assets}")
+            print(f"[IQ Option] Distribuição OTC vs Regular: {otc_count} OTC, {non_otc_count} Regular")
+            print(f"[IQ Option] Status: {active_count} ativos, {inactive_count} inativos")
+            print(f"[IQ Option] Total de pares retornados: {len(pairs)}")
+            print(f"[IQ Option] ========================================")
+
+            # Log de alguns exemplos
+            if pairs:
+                print(f"[IQ Option] Exemplos de pares retornados:")
+                for p in pairs[:10]:
+                    status = "ATIVO" if p["is_active"] else "INATIVO"
+                    tipo = "OTC" if p["is_otc"] else "REGULAR"
+                    print(f"  - {p['symbol']} ({tipo}, {status})")
+
             return pairs
 
         except Exception as exc:
