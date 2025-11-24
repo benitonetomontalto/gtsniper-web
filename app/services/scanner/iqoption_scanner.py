@@ -195,10 +195,12 @@ class IQOptionScanner:
 
             # Log alguns exemplos dos pares filtrados
             if active_pairs:
-                sample_pairs = active_pairs[:5]
+                sample_pairs = active_pairs[:10]  # Mostrar mais exemplos
                 print(f"[IQOptionScanner] Exemplos de pares a escanear:")
                 for p in sample_pairs:
-                    print(f"  - {p.get('symbol')} (OTC: {p.get('is_otc', False)})")
+                    otc_label = "OTC" if p.get('is_otc', False) else "REGULAR"
+                    market_type = p.get('type', '?')
+                    print(f"  - {p.get('symbol')} ({otc_label}, Tipo: {market_type})")
 
             return active_pairs
 
@@ -245,15 +247,19 @@ class IQOptionScanner:
 
             # Validar dados dos candles
             if candles.empty or len(candles) < 5:
-                print(f"[IQOptionScanner] Candles insuficientes para {symbol} {timeframe}M: {len(candles)} candles")
+                print(f"[IQOptionScanner] ❌ CANDLES INSUFICIENTES: {symbol} {timeframe}M - Recebidos: {len(candles)} candles (mínimo: 5)")
+                print(f"[IQOptionScanner]    → Possível causa: Par INATIVO ou SEM dados históricos")
                 return None
 
             # Validar colunas necessárias
             required_columns = ['open', 'high', 'low', 'close', 'volume']
             missing_columns = [col for col in required_columns if col not in candles.columns]
             if missing_columns:
-                print(f"[IQOptionScanner] Candles sem colunas necessárias para {symbol}: {missing_columns}")
+                print(f"[IQOptionScanner] ❌ CANDLES INVÁLIDOS: {symbol} - Faltam colunas: {missing_columns}")
                 return None
+
+            # Log SUCCESS - candles válidos recebidos
+            print(f"[IQOptionScanner] ✅ CANDLES OK: {symbol} {timeframe}M - {len(candles)} candles recebidos")
 
             # Generate signal using signal generator (synchronous)
             # Criar uma config temporária com o timeframe específico
@@ -265,6 +271,11 @@ class IQOptionScanner:
             from .signal_generator import SignalGenerator
             temp_generator = SignalGenerator(temp_config)
             signal = temp_generator.generate_signal(symbol, candles)
+
+            if signal:
+                print(f"[IQOptionScanner] 🎯 SINAL GERADO: {symbol} {timeframe}M - {signal.direction} ({signal.confidence:.1f}%)")
+            else:
+                print(f"[IQOptionScanner] ⚠️  SEM SINAL: {symbol} {timeframe}M - Nenhum padrão/confluência detectado")
 
             return signal
 
