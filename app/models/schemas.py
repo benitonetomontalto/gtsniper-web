@@ -3,7 +3,7 @@ Pydantic schemas for request/response validation
 """
 from datetime import datetime
 from typing import Optional, List, Literal
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 # Authentication
@@ -93,7 +93,7 @@ class TradingSignal(BaseModel):
 class ScanConfig(BaseModel):
     mode: Literal["manual", "auto"] = "auto"
     symbols: Optional[List[str]] = None
-    timeframe: int = Field(default=5, ge=1, le=60)  # Timeframe primário
+    timeframe: int = Field(default=5, description="Primary timeframe in minutes")
     timeframes: Optional[List[int]] = None  # Lista de timeframes para escanear (se None, usa só timeframe)
     sensitivity: Literal["conservative", "moderate", "aggressive"] = "moderate"
     use_volume_filter: bool = True
@@ -101,6 +101,46 @@ class ScanConfig(BaseModel):
     use_trend_filter: bool = True
     only_otc: bool = False
     only_open_market: bool = False  # Filter for open market only (not OTC)
+
+    @field_validator('timeframe')
+    @classmethod
+    def validate_timeframe(cls, v: int) -> int:
+        """Validate that timeframe is a valid IQ Option timeframe"""
+        valid_timeframes = [1, 5, 15, 30, 60]
+        if v not in valid_timeframes:
+            raise ValueError(f"Timeframe must be one of {valid_timeframes}, got {v}")
+        return v
+
+    @field_validator('timeframes')
+    @classmethod
+    def validate_timeframes(cls, v: Optional[List[int]]) -> Optional[List[int]]:
+        """Validate that all timeframes are valid"""
+        if v is None:
+            return v
+
+        valid_timeframes = {1, 5, 15, 30, 60}
+        invalid = [tf for tf in v if tf not in valid_timeframes]
+        if invalid:
+            raise ValueError(f"Invalid timeframes: {invalid}. Must be one of {valid_timeframes}")
+
+        return v
+
+    @model_validator(mode='after')
+    def validate_market_filters(self):
+        """Validate that only_otc and only_open_market are not both True"""
+        if self.only_otc and self.only_open_market:
+            raise ValueError("Cannot set both only_otc and only_open_market to True")
+        return self
+
+    @model_validator(mode='after')
+    def sync_timeframes(self):
+        """Ensure primary timeframe is in timeframes list"""
+        if self.timeframes is None:
+            self.timeframes = [self.timeframe]
+        elif self.timeframe not in self.timeframes:
+            # Add primary timeframe to list if missing
+            self.timeframes = [self.timeframe] + self.timeframes
+        return self
 
 
 # Statistics

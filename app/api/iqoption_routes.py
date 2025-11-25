@@ -40,6 +40,7 @@ class IQOptionPairResponse(BaseModel):
     name: str
     type: str
     is_active: bool
+    is_otc: bool = False  # Campo crítico para filtros OTC/Regular
 
 
 class IQOptionStatusResponse(BaseModel):
@@ -219,8 +220,22 @@ async def iqoption_balance(current_user: dict = None, email: str = "default"):
 
 
 @router.get("/otc-pairs", response_model=List[IQOptionPairResponse])
-async def iqoption_otc_pairs(current_user: dict = None, email: str = "default"):
-    """Get available OTC pairs from IQ Option"""
+async def iqoption_otc_pairs(
+    include_otc: bool = True,  # CORREÇÃO CRÍTICA: Aceitar parâmetro de filtro
+    current_user: dict = None,
+    email: str = "default"
+):
+    """
+    Get available trading pairs from IQ Option
+
+    Args:
+        include_otc: If True, includes OTC pairs. If False, only regular market pairs.
+        current_user: Current authenticated user
+        email: Email fallback if no auth
+
+    Returns:
+        List of trading pairs with is_otc field
+    """
     try:
         username = email if current_user is None else current_user.get("username")
         session_manager = get_session_manager()
@@ -228,14 +243,25 @@ async def iqoption_otc_pairs(current_user: dict = None, email: str = "default"):
         if not session_manager.is_connected(username):
             raise HTTPException(status_code=401, detail="Not connected to IQ Option")
 
-        pairs = await session_manager.get_user_pairs(username)
+        # CORREÇÃO CRÍTICA: Passar include_otc para session_manager
+        pairs = await session_manager.get_user_pairs(username, include_otc=include_otc)
+
+        print(f"[/otc-pairs] Usuario: {username}, include_otc={include_otc}, Total: {len(pairs)}")
+
+        # VALIDAÇÃO CRÍTICA: Garantir que todos os pares têm is_otc
+        for pair in pairs:
+            if "is_otc" not in pair:
+                # Inferir do nome do símbolo se não existir
+                pair["is_otc"] = "-OTC" in pair.get("symbol", "")
+                print(f"[/otc-pairs] ⚠️ Par sem is_otc: {pair.get('symbol')} -> inferido: {pair['is_otc']}")
 
         return [
             IQOptionPairResponse(
                 symbol=pair["symbol"],
                 name=pair["name"],
                 type=pair["type"],
-                is_active=pair["is_active"]
+                is_active=pair["is_active"],
+                is_otc=pair.get("is_otc", False)  # CORREÇÃO CRÍTICA: Incluir campo is_otc
             )
             for pair in pairs
         ]
