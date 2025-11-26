@@ -166,9 +166,19 @@ class IQOptionScanner:
             pairs = await self.session_manager.get_user_pairs(self.username, include_otc=include_otc_flag)
             print(f"[IQOptionScanner] Total de pares recebidos da IQ Option: {len(pairs)}")
 
+            # FILTRO: Remover pares não suportados pela API (evita "Asset X not found on consts")
+            from ..scanner.iqoption_client import IQOptionClient
+            supported_pairs = set(IQOptionClient.get_supported_pairs())
+
+            before_filter = len(pairs)
+            pairs = [p for p in pairs if p.get("symbol") in supported_pairs]
+            removed_count = before_filter - len(pairs)
+            if removed_count > 0:
+                print(f"[IQOptionScanner] Removidos {removed_count} pares não suportados pela API")
+
             # Filter only active pairs
             active_pairs = [p for p in pairs if p.get("is_active", False)]
-            print(f"[IQOptionScanner] Pares ativos: {len(active_pairs)}")
+            print(f"[IQOptionScanner] Pares ativos e suportados: {len(active_pairs)}")
 
             # Count OTC vs non-OTC before filtering
             otc_count = sum(1 for p in active_pairs if p.get("is_otc", False))

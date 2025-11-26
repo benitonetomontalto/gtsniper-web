@@ -628,9 +628,16 @@ class IQOptionClient:
     def _get_default_pairs(self) -> List[Dict]:
         """Return default FOREX pairs as fallback"""
         default_pairs = [
+            # Pares Forex Regulares mais líquidos
             "EURUSD", "GBPUSD", "USDJPY", "AUDUSD", "USDCAD", "NZDUSD",
             "EURJPY", "GBPJPY", "EURGBP", "AUDJPY", "EURAUD", "USDCHF",
+            "GBPCAD", "AUDCAD", "CADJPY", "CHFJPY", "EURCHF", "AUDNZD",
+            "NZDJPY", "GBPAUD", "GBPNZD", "EURNZD", "EURCAD",
+
+            # Pares OTC principais
             "EURUSD-OTC", "GBPUSD-OTC", "USDJPY-OTC", "AUDUSD-OTC",
+            "USDCAD-OTC", "NZDUSD-OTC", "EURJPY-OTC", "GBPJPY-OTC",
+            "EURGBP-OTC", "AUDJPY-OTC", "EURAUD-OTC", "USDCHF-OTC",
         ]
 
         return [
@@ -642,6 +649,27 @@ class IQOptionClient:
                 "type": "OTC" if "-OTC" in symbol else "BINARY",
             }
             for symbol in default_pairs
+        ]
+
+    @staticmethod
+    def get_supported_pairs() -> List[str]:
+        """
+        Retorna lista de pares CONHECIDOS que funcionam com a API IQ Option
+
+        Pares exóticos/novos (UK100-OTC, ARBUSD-OTC, etc) NÃO funcionam
+        porque a biblioteca iqoptionapi não os suporta
+        """
+        return [
+            # Forex Regular
+            "EURUSD", "GBPUSD", "USDJPY", "AUDUSD", "USDCAD", "NZDUSD",
+            "EURJPY", "GBPJPY", "EURGBP", "AUDJPY", "EURAUD", "USDCHF",
+            "GBPCAD", "AUDCAD", "CADJPY", "CHFJPY", "EURCHF", "AUDNZD",
+            "NZDJPY", "GBPAUD", "GBPNZD", "EURNZD", "EURCAD",
+
+            # Forex OTC
+            "EURUSD-OTC", "GBPUSD-OTC", "USDJPY-OTC", "AUDUSD-OTC",
+            "USDCAD-OTC", "NZDUSD-OTC", "EURJPY-OTC", "GBPJPY-OTC",
+            "EURGBP-OTC", "AUDJPY-OTC", "EURAUD-OTC", "USDCHF-OTC",
         ]
 
 
