@@ -352,30 +352,47 @@ class SignalGenerator:
         sr_level: Optional[SupportResistanceLevel]
     ) -> float:
         """
-        Calculate signal confidence (0-100) - REALISTA
+        Calculate signal confidence (0-100) - AJUSTADO POR SENSIBILIDADE
 
-        Base baixa, apenas confluências REAIS aumentam confiança
+        Base ajustada por modo para garantir assertividade prometida:
+        - Conservative: 70-85% (base 60%)
+        - Moderate: 60-75% (base 50%)
+        - Aggressive: 50-70% (base 40%)
         """
-        # Base REALISTA: 30% (não 50%!)
-        confidence = 30.0
+        # Base ajustada por sensibilidade
+        confidence_base_map = {
+            "conservative": 60.0,  # Sinais conservadores = alta confiança base
+            "moderate": 50.0,       # Sinais moderados = confiança média base
+            "aggressive": 40.0      # Sinais agressivos = confiança baixa base
+        }
+        confidence = confidence_base_map.get(self.config.sensitivity, 50.0)
 
-        # Cada confluência REAL adiciona menos (3% em vez de 5%)
-        confidence += len(confluences) * 3
+        # Cada confluência REAL adiciona 4%
+        confidence += len(confluences) * 4
 
         # Padrões fortes adicionam confiança
         if pattern.pattern_type in ["engulfing_bullish", "engulfing_bearish"]:
-            confidence += 12
+            confidence += 10
         elif pattern.pattern_type in ["bos_bullish", "bos_bearish"]:
             confidence += 8
         elif pattern.pattern_type in ["pin_bar"]:
-            confidence += 10
+            confidence += 8
+        elif pattern.pattern_type in ["inside_bar"]:
+            confidence += 5  # Inside bar também adiciona confiança
 
         # S/R forte adiciona confiança
         if sr_level:
             confidence += sr_level.strength * 2
 
-        # Limitar entre 35% e 85% (NUNCA 95%!)
-        confidence = max(confidence, 35.0)  # Mínimo realista
-        confidence = min(confidence, 85.0)  # Máximo realista
+        # Limitar por modo de sensibilidade
+        min_max_map = {
+            "conservative": (70.0, 85.0),  # Conservative: 70-85%
+            "moderate": (60.0, 75.0),      # Moderate: 60-75%
+            "aggressive": (50.0, 70.0)     # Aggressive: 50-70%
+        }
+        min_conf, max_conf = min_max_map.get(self.config.sensitivity, (60.0, 75.0))
+
+        confidence = max(confidence, min_conf)
+        confidence = min(confidence, max_conf)
 
         return confidence
