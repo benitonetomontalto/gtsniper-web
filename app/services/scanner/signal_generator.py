@@ -46,7 +46,7 @@ class SignalGenerator:
         df: pd.DataFrame
     ) -> Optional[TradingSignal]:
         """
-        Generate trading signal for a symbol
+        Generate trading signal for a symbol - 100% REAL, SEM SINAIS SIMULADOS
 
         Args:
             symbol: Trading pair symbol
@@ -55,36 +55,17 @@ class SignalGenerator:
         Returns:
             TradingSignal if valid signal found, None otherwise
         """
-        min_candles = 5 if self.config.sensitivity == "aggressive" else 50
+        # VALIDAÇÃO RIGOROSA: Mínimo de candles SEMPRE
+        min_candles = 50  # SEMPRE exige 50 candles para análise confiável
         if len(df) < min_candles:
-            if self.config.sensitivity != "aggressive":
-                return None
-            # Criar padding mínimo duplicando última vela conhecida
-            if len(df) == 0:
-                return None
-            last_row = df.iloc[-1]
-            while len(df) < min_candles:
-                new_row = last_row.copy()
-                new_row.name = last_row.name + pd.Timedelta(minutes=1)
-                df = pd.concat([df, new_row.to_frame().T])
+            print(f"[SignalGenerator] {symbol}: Candles insuficientes ({len(df)}/{min_candles}) - IGNORADO")
+            return None
 
-        # Detect patterns
+        # Detect patterns - APENAS PADRÕES REAIS
         patterns = self.pattern_detector.detect_patterns(df)
 
-        # MODO AGRESSIVO: Se não encontrou padrões, cria um padrão sintético
-        if not patterns and self.config.sensitivity == "aggressive":
-            last_close = df['close'].iloc[-1]
-            last_open = df['open'].iloc[-1]
-            pattern_type = 'bos_bullish' if last_close >= last_open else 'bos_bearish'
-            pattern = PriceActionPattern(
-                pattern_type=pattern_type,
-                description='Momentum imediato detectado (Modo Agressivo)',
-                candle_index=len(df) - 1
-            )
-            patterns = [pattern]
-
-        # MODO MODERADO/CAUTELOSO: Se não encontrou padrões REAIS, retorna None
-        elif not patterns:
+        # SEM PADRÕES REAIS = SEM SINAL (NUNCA INVENTAR!)
+        if not patterns:
             return None
 
         # Get the most recent pattern
@@ -99,36 +80,32 @@ class SignalGenerator:
         # Check if near S/R level
         is_near, sr_level = self.sr_detector.is_near_level(current_price, sr_levels)
 
-        # Determine signal direction
+        # Determine signal direction - APENAS SE HOUVER DIREÇÃO CLARA
         direction = self._determine_direction(pattern, sr_level, df)
 
-        # MODO AGRESSIVO: Se não determinou direção, usa lógica simples
-        if not direction and self.config.sensitivity == "aggressive":
-            direction = "CALL" if df['close'].iloc[-1] >= df['close'].iloc[-2] else "PUT"
-
-        # MODO MODERADO/CAUTELOSO: Se não determinou direção clara, retorna None
+        # SEM DIREÇÃO CLARA = SEM SINAL (NUNCA ADIVINHAR!)
         if not direction:
+            print(f"[SignalGenerator] {symbol}: Direção não determinada - IGNORADO")
             return None
 
-        # Apply filters
+        # Apply filters - SEMPRE OBRIGATÓRIO
         filters_ok = self._apply_filters(df, direction)
 
-        # MODO AGRESSIVO: Ignora filtros se falharem
-        if not filters_ok and self.config.sensitivity == "aggressive":
-            filters_ok = True  # Força aceitação no modo agressivo
-
-        # MODO MODERADO/CAUTELOSO: Respeita os filtros rigorosamente
+        # FILTROS FALHARAM = SEM SINAL (SEM EXCEÇÕES!)
         if not filters_ok:
+            print(f"[SignalGenerator] {symbol}: Filtros não aprovados - IGNORADO")
             return None
 
-        # Calculate confluences
+        # Calculate confluences - MÍNIMO 2 CONFLUÊNCIAS REAIS
         confluences = self._calculate_confluences(pattern, sr_level, df, direction)
-        if not confluences:
-            confluences.append('Momentum imediato favoravel')
-        if self.config.sensitivity == "aggressive":
-            confluences.append('Modo agressivo habilitado')
 
-        # Calculate confidence
+        # SEM CONFLUÊNCIAS SUFICIENTES = SEM SINAL
+        min_confluences = 3 if self.config.sensitivity == "conservative" else 2
+        if len(confluences) < min_confluences:
+            print(f"[SignalGenerator] {symbol}: Confluências insuficientes ({len(confluences)}/{min_confluences}) - IGNORADO")
+            return None
+
+        # Calculate confidence - BASEADO APENAS EM CONFLUÊNCIAS REAIS
         confidence = self._calculate_confidence(confluences, pattern, sr_level)
 
         # Calculate entry and expiry times (FUTURO!) - usando horário de Brasília
@@ -167,69 +144,97 @@ class SignalGenerator:
         sr_level: Optional[SupportResistanceLevel],
         df: pd.DataFrame
     ) -> Optional[str]:
-        """Determine signal direction (CALL or PUT) - VERSAO FLEXIVEL PARA GERAR MAIS SINAIS"""
+        """
+        Determine signal direction (CALL or PUT) - 100% BASEADO EM ANÁLISE REAL
 
-        # Padroes claramente bullish - SEMPRE CALL
+        Retorna None se não houver direção clara - NUNCA inventa!
+        """
+
+        # Padrões claramente bullish
         if pattern.pattern_type in ["pin_bar", "engulfing_bullish", "bos_bullish"]:
             return "CALL"
 
-        # Padroes claramente bearish - SEMPRE PUT
+        # Padrões claramente bearish
         if pattern.pattern_type in ["engulfing_bearish", "bos_bearish"]:
             return "PUT"
 
-        # Doji - usar RSI para decidir direcao
+        # Doji - usar RSI para decidir APENAS se RSI estiver em zona extrema
         if pattern.pattern_type == "doji":
             rsi = self.indicators.calculate_rsi(df)
             if len(rsi) > 0:
                 rsi_value = rsi.iloc[-1]
-                return "CALL" if rsi_value < 50 else "PUT"
-            return "CALL"  # Default CALL
+                # APENAS zonas extremas
+                if rsi_value < 30:  # Sobrevenda clara
+                    return "CALL"
+                elif rsi_value > 70:  # Sobrecompra clara
+                    return "PUT"
+            # RSI não extremo = sem direção clara
+            return None
 
-        # Inside bar - usar tendencia
+        # Inside bar - usar tendência APENAS se for forte
         if pattern.pattern_type == "inside_bar":
             trend = self.indicators.detect_trend(df)
-            if trend == "bearish":
+            if trend == "bullish":
+                return "CALL"
+            elif trend == "bearish":
                 return "PUT"
-            else:
-                return "CALL"  # Default ou bullish = CALL
+            # Sem tendência clara = sem direção
+            return None
 
-        # Fallback - sempre gerar sinal (CALL por padrao)
-        return "CALL"
+        # Padrão não reconhecido = SEM SINAL
+        return None
 
     def _apply_filters(self, df: pd.DataFrame, direction: str) -> bool:
-        """Apply various filters based on configuration"""
+        """
+        Apply various filters based on configuration - SEMPRE RIGOROSO
 
-        # MODO AGRESSIVO: Aceita praticamente tudo
+        Todos os modos aplicam filtros reais, apenas com níveis diferentes
+        """
+        trend = self.indicators.detect_trend(df)
+
+        # MODO AGRESSIVO: Filtros básicos mas REAIS
         if self.config.sensitivity == "aggressive":
-            return True
-
-        # MODO MODERADO: Aplica filtros básicos
-        if self.config.sensitivity == "moderate":
-            # Trend filter (moderado: evita contra-tendência)
-            trend = self.indicators.detect_trend(df)
+            # Evita contra-tendência forte
             if direction == "CALL" and trend == "bearish":
                 return False
             if direction == "PUT" and trend == "bullish":
                 return False
 
-            # Volatility filter (evita alta volatilidade extrema)
-            if self.indicators.is_high_volatility(df, threshold=3.0):  # Threshold mais alto
+            # Evita volatilidade extrema (mercado errático)
+            if self.indicators.is_high_volatility(df, threshold=4.0):
                 return False
 
             return True
 
-        # MODO CAUTELOSO/CONSERVATIVE: Aplica filtros RIGOROSOS
+        # MODO MODERADO: Filtros intermediários
+        if self.config.sensitivity == "moderate":
+            # Trend filter (evita contra-tendência)
+            if direction == "CALL" and trend == "bearish":
+                return False
+            if direction == "PUT" and trend == "bullish":
+                return False
+
+            # Volatility filter
+            if self.indicators.is_high_volatility(df, threshold=2.5):
+                return False
+
+            # Volume deve estar pelo menos normal (não decrescente)
+            if self.indicators.is_volume_decreasing(df):
+                return False
+
+            return True
+
+        # MODO CONSERVADOR: Filtros MUITO RIGOROSOS
         if self.config.sensitivity == "conservative":
-            # Volume filter (obrigatório)
+            # Volume filter (OBRIGATÓRIO - deve estar crescente)
             if not self.indicators.is_volume_increasing(df):
                 return False
 
-            # Volatility filter (mais rigoroso)
+            # Volatility filter (rigoroso)
             if self.indicators.is_high_volatility(df, threshold=2.0):
                 return False
 
-            # Trend filter (OBRIGATÓRIO - deve estar alinhado)
-            trend = self.indicators.detect_trend(df)
+            # Trend filter (OBRIGATÓRIO - deve estar ALINHADO)
             if direction == "CALL" and trend != "bullish":
                 return False
             if direction == "PUT" and trend != "bearish":
@@ -269,14 +274,16 @@ class SignalGenerator:
         if self.indicators.is_volume_increasing(df):
             confluences.append("Volume crescente confirmando movimento")
 
-        # RSI confluence
+        # RSI confluence - APENAS ZONAS EXTREMAS REAIS
         rsi = self.indicators.calculate_rsi(df)
         if len(rsi) > 0:
             rsi_value = rsi.iloc[-1]
-            if direction == "CALL" and rsi_value < 40:
-                confluences.append(f"RSI em sobrevenda ({rsi_value:.1f})")
-            elif direction == "PUT" and rsi_value > 60:
-                confluences.append(f"RSI em sobrecompra ({rsi_value:.1f})")
+            # Sobrevenda: RSI < 30 (não 40!)
+            if direction == "CALL" and rsi_value < 30:
+                confluences.append(f"RSI em sobrevenda extrema ({rsi_value:.1f})")
+            # Sobrecompra: RSI > 70 (não 60!)
+            elif direction == "PUT" and rsi_value > 70:
+                confluences.append(f"RSI em sobrecompra extrema ({rsi_value:.1f})")
 
         # MACD confluence
         macd_line, signal_line, _ = self.indicators.calculate_macd(df)
@@ -324,23 +331,31 @@ class SignalGenerator:
         pattern: PriceActionPattern,
         sr_level: Optional[SupportResistanceLevel]
     ) -> float:
-        """Calculate signal confidence (0-100)"""
-        confidence = 50.0  # Base confidence
+        """
+        Calculate signal confidence (0-100) - REALISTA
 
-        # Add points for each confluence
-        confidence += len(confluences) * 5
+        Base baixa, apenas confluências REAIS aumentam confiança
+        """
+        # Base REALISTA: 30% (não 50%!)
+        confidence = 30.0
 
-        # Strong patterns add more confidence
+        # Cada confluência REAL adiciona menos (3% em vez de 5%)
+        confidence += len(confluences) * 3
+
+        # Padrões fortes adicionam confiança
         if pattern.pattern_type in ["engulfing_bullish", "engulfing_bearish"]:
-            confidence += 15
+            confidence += 12
         elif pattern.pattern_type in ["bos_bullish", "bos_bearish"]:
+            confidence += 8
+        elif pattern.pattern_type in ["pin_bar"]:
             confidence += 10
 
-        # Strong S/R level adds confidence
+        # S/R forte adiciona confiança
         if sr_level:
-            confidence += sr_level.strength * 3
+            confidence += sr_level.strength * 2
 
-        # Cap at 95 e garante base maior para modo agressivo
-        if self.config.sensitivity == 'aggressive':
-            confidence = max(confidence, 55.0)
-        return min(confidence, 95.0)
+        # Limitar entre 35% e 85% (NUNCA 95%!)
+        confidence = max(confidence, 35.0)  # Mínimo realista
+        confidence = min(confidence, 85.0)  # Máximo realista
+
+        return confidence

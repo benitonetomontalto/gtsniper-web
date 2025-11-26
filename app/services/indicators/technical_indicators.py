@@ -131,6 +131,17 @@ class TechnicalIndicators:
         return recent_volume > previous_volume * 1.2
 
     @staticmethod
+    def is_volume_decreasing(df: pd.DataFrame, period: int = 5) -> bool:
+        """Check if volume is decreasing"""
+        if 'volume' not in df.columns or len(df) < period + 1:
+            return False
+
+        recent_volume = df['volume'].iloc[-period:].mean()
+        previous_volume = df['volume'].iloc[-period * 2:-period].mean()
+
+        return recent_volume < previous_volume * 0.8
+
+    @staticmethod
     def calculate_stochastic(
         df: pd.DataFrame,
         k_period: int = 14,
