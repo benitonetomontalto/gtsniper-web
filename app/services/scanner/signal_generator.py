@@ -55,10 +55,16 @@ class SignalGenerator:
         Returns:
             TradingSignal if valid signal found, None otherwise
         """
-        # VALIDAÇÃO RIGOROSA: Mínimo de candles SEMPRE
-        min_candles = 50  # SEMPRE exige 50 candles para análise confiável
+        # VALIDAÇÃO: Mínimo de candles ajustado por sensibilidade
+        min_candles_map = {
+            "conservative": 50,
+            "moderate": 40,
+            "aggressive": 30
+        }
+        min_candles = min_candles_map.get(self.config.sensitivity, 40)
+
         if len(df) < min_candles:
-            print(f"[SignalGenerator] {symbol}: Candles insuficientes ({len(df)}/{min_candles}) - IGNORADO")
+            print(f"[SignalGenerator] {symbol}: ❌ Candles insuficientes ({len(df)}/{min_candles}) - IGNORADO")
             return None
 
         # Detect patterns - APENAS PADRÕES REAIS
@@ -66,6 +72,7 @@ class SignalGenerator:
 
         # SEM PADRÕES REAIS = SEM SINAL (NUNCA INVENTAR!)
         if not patterns:
+            print(f"[SignalGenerator] {symbol}: ❌ Nenhum padrão detectado ({len(df)} candles analisados)")
             return None
 
         # Get the most recent pattern
@@ -85,24 +92,32 @@ class SignalGenerator:
 
         # SEM DIREÇÃO CLARA = SEM SINAL (NUNCA ADIVINHAR!)
         if not direction:
-            print(f"[SignalGenerator] {symbol}: Direção não determinada - IGNORADO")
+            print(f"[SignalGenerator] {symbol}: ❌ Direção não determinada - Padrão: {pattern.pattern_type}")
             return None
 
         # Apply filters - SEMPRE OBRIGATÓRIO
-        filters_ok = self._apply_filters(df, direction)
+        filters_ok, filter_reason = self._apply_filters(df, direction)
 
         # FILTROS FALHARAM = SEM SINAL (SEM EXCEÇÕES!)
         if not filters_ok:
-            print(f"[SignalGenerator] {symbol}: Filtros não aprovados - IGNORADO")
+            print(f"[SignalGenerator] {symbol}: ❌ Filtros não aprovados - {filter_reason}")
             return None
 
         # Calculate confluences - MÍNIMO 2 CONFLUÊNCIAS REAIS
         confluences = self._calculate_confluences(pattern, sr_level, df, direction)
 
         # SEM CONFLUÊNCIAS SUFICIENTES = SEM SINAL
-        min_confluences = 3 if self.config.sensitivity == "conservative" else 2
+        min_confluences_map = {
+            "conservative": 3,
+            "moderate": 2,
+            "aggressive": 1  # Modo agressivo: aceita 1 confluência forte
+        }
+        min_confluences = min_confluences_map.get(self.config.sensitivity, 2)
+
         if len(confluences) < min_confluences:
-            print(f"[SignalGenerator] {symbol}: Confluências insuficientes ({len(confluences)}/{min_confluences}) - IGNORADO")
+            confluences_str = ", ".join(confluences) if confluences else "Nenhuma"
+            print(f"[SignalGenerator] {symbol}: ❌ Confluências insuficientes ({len(confluences)}/{min_confluences})")
+            print(f"[SignalGenerator]    → Encontradas: {confluences_str}")
             return None
 
         # Calculate confidence - BASEADO APENAS EM CONFLUÊNCIAS REAIS
@@ -135,6 +150,10 @@ class SignalGenerator:
             confidence=confidence,
             expiry_minutes=expiry_minutes
         )
+
+        # LOG de sucesso
+        print(f"[SignalGenerator] ✅ SINAL GERADO: {symbol} - {direction} @ {current_price:.5f}")
+        print(f"[SignalGenerator]    → Confiança: {confidence:.1f}% | Confluências: {len(confluences)} | Padrão: {pattern.pattern_type}")
 
         return signal
 
@@ -184,11 +203,12 @@ class SignalGenerator:
         # Padrão não reconhecido = SEM SINAL
         return None
 
-    def _apply_filters(self, df: pd.DataFrame, direction: str) -> bool:
+    def _apply_filters(self, df: pd.DataFrame, direction: str) -> tuple[bool, str]:
         """
         Apply various filters based on configuration - SEMPRE RIGOROSO
 
-        Todos os modos aplicam filtros reais, apenas com níveis diferentes
+        Returns:
+            (passed: bool, reason: str) - True if passed, False with reason if failed
         """
         trend = self.indicators.detect_trend(df)
 
@@ -196,53 +216,53 @@ class SignalGenerator:
         if self.config.sensitivity == "aggressive":
             # Evita contra-tendência forte
             if direction == "CALL" and trend == "bearish":
-                return False
+                return False, f"Tendência bearish conflita com CALL"
             if direction == "PUT" and trend == "bullish":
-                return False
+                return False, f"Tendência bullish conflita com PUT"
 
             # Evita volatilidade extrema (mercado errático)
             if self.indicators.is_high_volatility(df, threshold=4.0):
-                return False
+                return False, f"Volatilidade extrema (threshold: 4.0)"
 
-            return True
+            return True, "OK"
 
         # MODO MODERADO: Filtros intermediários
         if self.config.sensitivity == "moderate":
             # Trend filter (evita contra-tendência)
             if direction == "CALL" and trend == "bearish":
-                return False
+                return False, f"Tendência bearish conflita com CALL"
             if direction == "PUT" and trend == "bullish":
-                return False
+                return False, f"Tendência bullish conflita com PUT"
 
             # Volatility filter
             if self.indicators.is_high_volatility(df, threshold=2.5):
-                return False
+                return False, f"Volatilidade alta (threshold: 2.5)"
 
             # Volume deve estar pelo menos normal (não decrescente)
             if self.indicators.is_volume_decreasing(df):
-                return False
+                return False, f"Volume decrescente"
 
-            return True
+            return True, "OK"
 
         # MODO CONSERVADOR: Filtros MUITO RIGOROSOS
         if self.config.sensitivity == "conservative":
             # Volume filter (OBRIGATÓRIO - deve estar crescente)
             if not self.indicators.is_volume_increasing(df):
-                return False
+                return False, f"Volume não crescente"
 
             # Volatility filter (rigoroso)
             if self.indicators.is_high_volatility(df, threshold=2.0):
-                return False
+                return False, f"Volatilidade alta (threshold: 2.0)"
 
             # Trend filter (OBRIGATÓRIO - deve estar ALINHADO)
             if direction == "CALL" and trend != "bullish":
-                return False
+                return False, f"Tendência {trend} não alinhada com CALL (requer bullish)"
             if direction == "PUT" and trend != "bearish":
-                return False
+                return False, f"Tendência {trend} não alinhada com PUT (requer bearish)"
 
-            return True
+            return True, "OK"
 
-        return True
+        return True, "OK"
 
     def _calculate_confluences(
         self,
