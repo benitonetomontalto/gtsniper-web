@@ -177,7 +177,7 @@ async def create_token(request: CreateTokenRequest, authenticated: bool = Depend
         Token criado
     """
     # Gerar token se não fornecido
-    token_value = request.token_value or f"RICK-{secrets.token_urlsafe(16)}"
+    token_value = request.token_value or f"GT-{secrets.token_urlsafe(16)}"
 
     # Calcular data de expiração
     expires_at = None

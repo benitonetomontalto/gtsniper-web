@@ -176,7 +176,7 @@ async def diagnostic_full(current_user: dict = Depends(get_current_user)):
             "type": "critical",
             "area": "Firewall",
             "message": "Porta 443 (HTTPS) está bloqueada",
-            "solution": "Adicionar exceção no firewall para Rick Trader"
+            "solution": "Adicionar exceção no firewall para GT Sniper"
         })
 
     if not network["ssl_tls"].get("working"):
@@ -201,7 +201,7 @@ async def diagnostic_full(current_user: dict = Depends(get_current_user)):
                 "type": "critical",
                 "area": "Bibliotecas",
                 "message": f"Biblioteca {lib_name} não encontrada",
-                "solution": "Reinstalar Rick Trader"
+                "solution": "Reinstalar GT Sniper"
             })
 
     # Status geral

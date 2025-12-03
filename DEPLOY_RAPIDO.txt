@@ -1,5 +1,5 @@
 ================================================================================
-                   RICK TRADER - DEPLOY ONLINE RAPIDO
+                   GT SNIPER - DEPLOY ONLINE RAPIDO
 ================================================================================
 
 PASTA PRONTA PARA DEPLOY!
@@ -190,7 +190,7 @@ https://sua-url.onrender.com/static/admin.html
 
 ================================================================================
 
-RICK TRADER © 2025
+GT SNIPER © 2025
 Sistema de Trading Profissional com IA
 
 PRONTO PARA DEPLOY! 🚀
