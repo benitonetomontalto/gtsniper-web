@@ -1,28 +1,26 @@
 /*
  * GT Sniper - CSS Responsivo Mobile & Desktop
- * Sobrescreve Tailwind CSS para funcionar perfeitamente em celular
+ * Corrigido para funcionar PERFEITAMENTE em celular
  */
 
 /* ========================================
-   RESET E BASE PARA MOBILE
+   RESET E BASE
    ======================================== */
 
-/* Garante que viewport funcione corretamente */
 html {
   -webkit-text-size-adjust: 100%;
   -ms-text-size-adjust: 100%;
-  -moz-text-size-adjust: 100%;
 }
 
-/* Previne scroll horizontal */
+/* NÃO bloqueia scroll - deixa funcionar normal */
 body {
   overflow-x: hidden !important;
-  max-width: 100vw !important;
+  /* NÃO adiciona max-width - deixa fluir */
 }
 
 #root {
   overflow-x: hidden !important;
-  max-width: 100vw !important;
+  /* NÃO adiciona max-width - deixa fluir */
 }
 
 /* ========================================
@@ -30,20 +28,16 @@ body {
    ======================================== */
 
 @media (max-width: 640px) {
-  /* Reduz fonte base */
+  /* Fonte menor para mobile */
   html {
     font-size: 14px !important;
   }
 
-  /* Container principal com padding menor */
+  /* Container com padding menor */
   .container,
-  div[class*="container"],
-  div[class*="mx-auto"],
-  main {
-    padding-left: 0.5rem !important;
-    padding-right: 0.5rem !important;
-    max-width: 100% !important;
-    width: 100% !important;
+  div[class*="mx-auto"] {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
   }
 
   /* Headers menores */
@@ -57,26 +51,17 @@ body {
     line-height: 1.75rem !important;
   }
 
-  h3, .text-xl {
-    font-size: 1.125rem !important;
-    line-height: 1.5rem !important;
-  }
-
-  /* GRID - Força 1 coluna em mobile */
-  .grid,
-  div[class*="grid"],
-  div[class*="grid-cols"] {
+  /* GRID - 1 coluna em mobile */
+  .grid-cols-2,
+  .grid-cols-3,
+  .grid-cols-4 {
     grid-template-columns: 1fr !important;
-    gap: 0.75rem !important;
+    gap: 1rem !important;
   }
 
-  /* Padding e Margin reduzidos */
+  /* Padding reduzido */
   .p-6, .p-8, .p-10, .p-12 {
     padding: 1rem !important;
-  }
-
-  .p-4, .p-5 {
-    padding: 0.75rem !important;
   }
 
   .px-6, .px-8, .px-12 {
@@ -85,76 +70,48 @@ body {
   }
 
   .py-6, .py-8, .py-12, .py-16 {
-    padding-top: 1rem !important;
-    padding-bottom: 1rem !important;
-  }
-
-  .m-4, .m-6, .m-8 {
-    margin: 0.5rem !important;
-  }
-
-  .mb-6, .mb-8 {
-    margin-bottom: 1rem !important;
-  }
-
-  .mt-6, .mt-8 {
-    margin-top: 1rem !important;
+    padding-top: 1.5rem !important;
+    padding-bottom: 1.5rem !important;
   }
 
   /* Gap reduzido */
   .gap-4, .gap-6 {
-    gap: 0.75rem !important;
+    gap: 1rem !important;
   }
 
-  /* Botões ocupam largura total */
+  /* BOTÕES - NÃO força width 100% - deixa natural */
   button,
-  a[class*="button"],
-  button[class*="btn"],
-  input[type="submit"] {
-    width: 100% !important;
-    padding: 0.875rem 1rem !important;
+  a[role="button"] {
+    padding: 0.875rem 1.5rem !important;
     font-size: 1rem !important;
-    margin-bottom: 0.5rem !important;
+    /* NÃO força width - deixa clicar funcionar */
+    min-height: 44px !important; /* Touch-friendly */
   }
 
-  /* Inputs largura total */
+  /* Inputs - NÃO força width 100% em todos */
   input:not([type="checkbox"]):not([type="radio"]),
   select,
   textarea {
-    width: 100% !important;
     font-size: 16px !important; /* Previne zoom iOS */
     padding: 0.75rem !important;
   }
 
   /* Cards com padding menor */
-  div[class*="rounded"],
-  div[class*="border"],
-  div[class*="bg-dark"],
-  div[class*="bg-slate"] {
-    padding: 0.75rem !important;
-    margin-bottom: 0.75rem !important;
+  div[class*="rounded-lg"],
+  div[class*="rounded-xl"] {
+    padding: 0.875rem !important;
   }
 
-  /* Flex vira coluna */
-  .flex:not(.flex-col),
-  div[class*="flex"]:not([class*="flex-col"]) {
-    flex-direction: column !important;
-    gap: 0.75rem !important;
-  }
+  /* NÃO força flex-direction: column em TUDO */
+  /* Apenas quando faz sentido */
 
-  /* Items flex ocupam largura total */
-  .flex > *,
-  div[class*="flex"] > * {
-    width: 100% !important;
-  }
-
-  /* Ícones e SVG menores */
+  /* SVG menores */
   svg {
-    width: 1.25rem !important;
-    height: 1.25rem !important;
+    max-width: 1.5rem !important;
+    max-height: 1.5rem !important;
   }
 
-  /* Text sizes menores */
+  /* Text sizes ajustados */
   .text-lg {
     font-size: 1rem !important;
   }
@@ -163,51 +120,16 @@ body {
     font-size: 0.875rem !important;
   }
 
-  .text-xs {
-    font-size: 0.75rem !important;
-  }
-
-  /* Space between reduzido */
-  .space-y-4 > * + * {
-    margin-top: 0.75rem !important;
-  }
-
-  .space-y-6 > * + * {
-    margin-top: 1rem !important;
-  }
-
-  .space-x-4 > * + * {
-    margin-left: 0 !important;
-    margin-top: 0.75rem !important;
-  }
-
-  /* Modais ocupam tela toda */
-  div[class*="fixed"],
-  div[class*="absolute"] {
-    width: 95% !important;
-    max-width: 95vw !important;
-    left: 2.5% !important;
-    right: 2.5% !important;
-  }
-
-  /* Tabelas responsivas - força scroll horizontal */
+  /* Tabelas com scroll horizontal */
   table {
     display: block !important;
-    width: 100% !important;
     overflow-x: auto !important;
     -webkit-overflow-scrolling: touch !important;
     font-size: 0.875rem !important;
   }
 
-  table thead {
-    font-size: 0.75rem !important;
-  }
-
-  table td,
-  table th {
-    min-width: 80px !important;
+  table td, table th {
     padding: 0.5rem !important;
-    white-space: nowrap !important;
   }
 
   /* Imagens responsivas */
@@ -216,122 +138,83 @@ body {
     height: auto !important;
   }
 
-  /* Max width para elementos grandes */
-  div[class*="max-w"],
-  div[class*="w-80"],
-  div[class*="w-96"] {
+  /* NÃO força width em TODOS os elementos */
+  /* Apenas nos que realmente precisam */
+  div[class*="w-96"],
+  div[class*="w-80"] {
     max-width: 100% !important;
-    width: 100% !important;
   }
 
-  /* ScrollBars mais finas */
+  /* ScrollBars finas */
   ::-webkit-scrollbar {
-    width: 4px !important;
-    height: 4px !important;
+    width: 6px !important;
+    height: 6px !important;
   }
 
   ::-webkit-scrollbar-thumb {
     background-color: rgba(255, 255, 255, 0.3) !important;
-    border-radius: 2px !important;
+    border-radius: 3px !important;
   }
 
   /* Touch-friendly - áreas de toque mínimas */
-  a,
   button,
+  a[role="button"],
   input[type="checkbox"],
-  input[type="radio"],
-  label {
+  input[type="radio"] {
     min-height: 44px !important;
     min-width: 44px !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-  }
-
-  /* Esconde textos longos com ellipsis */
-  .text-xs,
-  .text-sm {
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
   }
 }
 
 /* ========================================
-   TABLET (641px - 768px)
+   TABLET (641px - 1024px)
    ======================================== */
 
-@media (min-width: 641px) and (max-width: 768px) {
+@media (min-width: 641px) and (max-width: 1024px) {
   html {
     font-size: 15px !important;
   }
 
-  /* Grid de 2 colunas */
-  .grid,
-  div[class*="grid-cols-3"],
-  div[class*="grid-cols-4"] {
+  /* Grid de 2 colunas em tablet */
+  .grid-cols-3,
+  .grid-cols-4 {
     grid-template-columns: repeat(2, 1fr) !important;
   }
 
   .container {
-    padding: 1rem !important;
-  }
-
-  button {
-    width: auto !important;
-    min-width: 120px !important;
+    padding: 1.5rem !important;
   }
 }
 
 /* ========================================
-   LANDSCAPE MOBILE (até 768px altura)
+   LANDSCAPE MOBILE
    ======================================== */
 
 @media (max-width: 768px) and (orientation: landscape) {
-  /* Ajusta altura para landscape */
   html {
     font-size: 13px !important;
   }
 
-  /* Padding vertical reduzido */
-  .py-6,
-  .py-8,
-  .py-12 {
-    padding-top: 0.5rem !important;
-    padding-bottom: 0.5rem !important;
-  }
-
-  .p-6,
-  .p-8 {
-    padding: 0.75rem !important;
+  .py-6, .py-8, .py-12 {
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
   }
 
   /* Grid 2 colunas em landscape mobile */
-  .grid {
+  .grid-cols-2,
+  .grid-cols-3,
+  .grid-cols-4 {
     grid-template-columns: repeat(2, 1fr) !important;
-    gap: 0.5rem !important;
-  }
-
-  /* Header menor */
-  h1,
-  .text-4xl,
-  .text-3xl {
-    font-size: 1.25rem !important;
-    line-height: 1.5rem !important;
-  }
-
-  /* Modais menores em landscape */
-  div[class*="fixed"] {
-    max-height: 85vh !important;
-    overflow-y: auto !important;
+    gap: 0.75rem !important;
   }
 }
 
 /* ========================================
-   DESKTOP (acima de 1024px) - MANTÉM NORMAL
+   DESKTOP (mantém normal)
    ======================================== */
 
 @media (min-width: 1025px) {
-  /* Desktop funciona normal - não sobrescreve nada */
+  /* Desktop funciona normal */
   .grid-cols-3 {
     grid-template-columns: repeat(3, 1fr) !important;
   }
@@ -342,7 +225,7 @@ body {
 }
 
 /* ========================================
-   FIXES ESPECÍFICOS PARA PROBLEMAS COMUNS
+   FIXES IMPORTANTES
    ======================================== */
 
 /* Previne zoom em input focus (iOS) */
@@ -354,7 +237,7 @@ body {
   input[type="tel"],
   select,
   textarea {
-    font-size: 16px !important; /* iOS não dá zoom se >= 16px */
+    font-size: 16px !important;
   }
 }
 
@@ -366,29 +249,22 @@ body {
       padding-right: env(safe-area-inset-right) !important;
       padding-bottom: env(safe-area-inset-bottom) !important;
     }
-
-    /* Header com safe area top */
-    header,
-    nav {
-      padding-top: max(1rem, env(safe-area-inset-top)) !important;
-    }
   }
 }
 
-/* Performance - reduz animações em mobile */
+/* Performance - animações mais rápidas em mobile */
 @media (max-width: 640px) {
   * {
     animation-duration: 0.2s !important;
     transition-duration: 0.2s !important;
   }
 
-  /* Smooth scroll */
   html {
     scroll-behavior: smooth !important;
   }
 }
 
-/* Desabilita animações se usuário preferir */
+/* Respeita preferência de reduced motion */
 @media (prefers-reduced-motion: reduce) {
   * {
     animation: none !important;
@@ -397,27 +273,25 @@ body {
 }
 
 /* ========================================
-   CLASSES UTILITÁRIAS MOBILE
+   UTILITÁRIOS
    ======================================== */
 
 /* Esconde em mobile */
 @media (max-width: 640px) {
-  .desktop-only,
-  [class*="desktop-only"] {
+  .desktop-only {
     display: none !important;
   }
 }
 
 /* Esconde em desktop */
 @media (min-width: 641px) {
-  .mobile-only,
-  [class*="mobile-only"] {
+  .mobile-only {
     display: none !important;
   }
 }
 
 /* ========================================
-   DARK MODE (respeita preferência)
+   DARK MODE
    ======================================== */
 
 @media (prefers-color-scheme: dark) {
@@ -426,39 +300,12 @@ body {
   }
 }
 
-@media (prefers-color-scheme: light) {
-  body {
-    background-color: #ffffff !important;
-    color: #1a1a1a !important;
-  }
-
-  /* Ajusta contraste em light mode */
-  .bg-dark-300,
-  .bg-dark-200,
-  .bg-dark-100 {
-    background-color: #f5f5f5 !important;
-  }
-
-  .text-white {
-    color: #1a1a1a !important;
-  }
-
-  .border-gray-700,
-  .border-gray-800 {
-    border-color: #e5e5e5 !important;
-  }
-}
-
 /* ========================================
    IMPRESSÃO
    ======================================== */
 
 @media print {
-  nav,
-  header,
-  aside,
-  button,
-  .no-print {
+  nav, header, aside, button {
     display: none !important;
   }
 
