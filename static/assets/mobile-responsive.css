@@ -1,6 +1,6 @@
 /*
  * GT Sniper - CSS Responsivo Mobile & Desktop
- * Corrigido para funcionar PERFEITAMENTE em celular
+ * Funciona perfeitamente em PORTRAIT e LANDSCAPE
  */
 
 /* ========================================
@@ -12,23 +12,20 @@ html {
   -ms-text-size-adjust: 100%;
 }
 
-/* NÃO bloqueia scroll - deixa funcionar normal */
 body {
   overflow-x: hidden !important;
-  /* NÃO adiciona max-width - deixa fluir */
 }
 
 #root {
   overflow-x: hidden !important;
-  /* NÃO adiciona max-width - deixa fluir */
 }
 
 /* ========================================
-   MOBILE (até 640px) - SMARTPHONES
+   MOBILE PORTRAIT (vertical) - até 640px
    ======================================== */
 
-@media (max-width: 640px) {
-  /* Fonte menor para mobile */
+@media (max-width: 640px) and (orientation: portrait) {
+  /* Fonte menor para portrait */
   html {
     font-size: 14px !important;
   }
@@ -51,7 +48,7 @@ body {
     line-height: 1.75rem !important;
   }
 
-  /* GRID - 1 coluna em mobile */
+  /* GRID - 1 coluna em portrait */
   .grid-cols-2,
   .grid-cols-3,
   .grid-cols-4 {
@@ -79,20 +76,19 @@ body {
     gap: 1rem !important;
   }
 
-  /* BOTÕES - NÃO força width 100% - deixa natural */
+  /* Botões touch-friendly */
   button,
   a[role="button"] {
     padding: 0.875rem 1.5rem !important;
     font-size: 1rem !important;
-    /* NÃO força width - deixa clicar funcionar */
-    min-height: 44px !important; /* Touch-friendly */
+    min-height: 44px !important;
   }
 
-  /* Inputs - NÃO força width 100% em todos */
+  /* Inputs */
   input:not([type="checkbox"]):not([type="radio"]),
   select,
   textarea {
-    font-size: 16px !important; /* Previne zoom iOS */
+    font-size: 16px !important;
     padding: 0.75rem !important;
   }
 
@@ -101,9 +97,6 @@ body {
   div[class*="rounded-xl"] {
     padding: 0.875rem !important;
   }
-
-  /* NÃO força flex-direction: column em TUDO */
-  /* Apenas quando faz sentido */
 
   /* SVG menores */
   svg {
@@ -120,7 +113,7 @@ body {
     font-size: 0.875rem !important;
   }
 
-  /* Tabelas com scroll horizontal */
+  /* Tabelas com scroll */
   table {
     display: block !important;
     overflow-x: auto !important;
@@ -138,8 +131,7 @@ body {
     height: auto !important;
   }
 
-  /* NÃO força width em TODOS os elementos */
-  /* Apenas nos que realmente precisam */
+  /* Max width elementos grandes */
   div[class*="w-96"],
   div[class*="w-80"] {
     max-width: 100% !important;
@@ -156,7 +148,7 @@ body {
     border-radius: 3px !important;
   }
 
-  /* Touch-friendly - áreas de toque mínimas */
+  /* Touch-friendly */
   button,
   a[role="button"],
   input[type="checkbox"],
@@ -167,15 +159,206 @@ body {
 }
 
 /* ========================================
+   MOBILE LANDSCAPE (horizontal) - até 920px largura, até 500px altura
+   ======================================== */
+
+@media (max-width: 920px) and (max-height: 500px) and (orientation: landscape) {
+  /* Fonte AINDA MENOR para caber mais em landscape */
+  html {
+    font-size: 12px !important;
+  }
+
+  /* Container com padding MÍNIMO */
+  .container,
+  div[class*="mx-auto"] {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+
+  /* Headers MUITO menores para landscape */
+  h1, .text-4xl, .text-3xl {
+    font-size: 1.125rem !important;
+    line-height: 1.5rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  h2, .text-2xl {
+    font-size: 1rem !important;
+    line-height: 1.375rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  h3, .text-xl {
+    font-size: 0.875rem !important;
+    line-height: 1.25rem !important;
+  }
+
+  /* GRID - 2 colunas em landscape para aproveitar largura */
+  .grid-cols-2,
+  .grid-cols-3,
+  .grid-cols-4 {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.5rem !important;
+  }
+
+  /* Padding MUITO reduzido verticalmente */
+  .p-6, .p-8, .p-10, .p-12 {
+    padding: 0.5rem !important;
+  }
+
+  .p-4, .p-5 {
+    padding: 0.5rem !important;
+  }
+
+  .px-6, .px-8, .px-12 {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+
+  /* Padding VERTICAL mínimo para caber tudo */
+  .py-6, .py-8, .py-12, .py-16 {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+  }
+
+  .py-4, .py-5 {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+  }
+
+  /* Margins reduzidas */
+  .mb-6, .mb-8 {
+    margin-bottom: 0.5rem !important;
+  }
+
+  .mt-6, .mt-8 {
+    margin-top: 0.5rem !important;
+  }
+
+  .mb-4 {
+    margin-bottom: 0.375rem !important;
+  }
+
+  .mt-4 {
+    margin-top: 0.375rem !important;
+  }
+
+  /* Gap reduzido */
+  .gap-4, .gap-6 {
+    gap: 0.5rem !important;
+  }
+
+  .gap-2, .gap-3 {
+    gap: 0.375rem !important;
+  }
+
+  /* Space-y reduzido */
+  .space-y-4 > * + *,
+  .space-y-6 > * + * {
+    margin-top: 0.5rem !important;
+  }
+
+  .space-y-2 > * + *,
+  .space-y-3 > * + * {
+    margin-top: 0.375rem !important;
+  }
+
+  /* Botões menores verticalmente */
+  button,
+  a[role="button"] {
+    padding: 0.5rem 1rem !important;
+    font-size: 0.875rem !important;
+    min-height: 36px !important; /* Menor em landscape */
+  }
+
+  /* Inputs menores */
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    font-size: 14px !important;
+    padding: 0.5rem !important;
+  }
+
+  /* Cards com padding MÍNIMO */
+  div[class*="rounded-lg"],
+  div[class*="rounded-xl"] {
+    padding: 0.5rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  /* SVG ainda menores */
+  svg {
+    max-width: 1.125rem !important;
+    max-height: 1.125rem !important;
+  }
+
+  /* Text sizes menores */
+  .text-lg {
+    font-size: 0.875rem !important;
+  }
+
+  .text-base {
+    font-size: 0.8125rem !important;
+  }
+
+  .text-sm {
+    font-size: 0.75rem !important;
+  }
+
+  .text-xs {
+    font-size: 0.6875rem !important;
+  }
+
+  /* Tabelas compactas */
+  table {
+    display: block !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    font-size: 0.75rem !important;
+  }
+
+  table td, table th {
+    padding: 0.25rem 0.375rem !important;
+  }
+
+  /* Height ajustado para landscape */
+  div[class*="h-screen"],
+  div[class*="min-h-screen"] {
+    min-height: auto !important;
+    height: auto !important;
+  }
+
+  /* Evita elementos muito altos */
+  div[class*="h-96"],
+  div[class*="h-64"] {
+    max-height: 50vh !important;
+    height: auto !important;
+    overflow-y: auto !important;
+  }
+
+  /* ScrollBars MUITO finas */
+  ::-webkit-scrollbar {
+    width: 3px !important;
+    height: 3px !important;
+  }
+
+  /* Modais menores em landscape */
+  div[class*="fixed"] {
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+  }
+}
+
+/* ========================================
    TABLET (641px - 1024px)
    ======================================== */
 
-@media (min-width: 641px) and (max-width: 1024px) {
+@media (min-width: 641px) and (max-width: 1024px) and (orientation: portrait) {
   html {
     font-size: 15px !important;
   }
 
-  /* Grid de 2 colunas em tablet */
+  /* Grid de 2 colunas em tablet portrait */
   .grid-cols-3,
   .grid-cols-4 {
     grid-template-columns: repeat(2, 1fr) !important;
@@ -186,26 +369,25 @@ body {
   }
 }
 
-/* ========================================
-   LANDSCAPE MOBILE
-   ======================================== */
-
-@media (max-width: 768px) and (orientation: landscape) {
+@media (min-width: 641px) and (max-width: 1024px) and (orientation: landscape) {
   html {
-    font-size: 13px !important;
+    font-size: 14px !important;
   }
 
+  /* Grid de 3 colunas em tablet landscape */
+  .grid-cols-3,
+  .grid-cols-4 {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+
+  .container {
+    padding: 1rem !important;
+  }
+
+  /* Padding vertical reduzido */
   .py-6, .py-8, .py-12 {
     padding-top: 1rem !important;
     padding-bottom: 1rem !important;
-  }
-
-  /* Grid 2 colunas em landscape mobile */
-  .grid-cols-2,
-  .grid-cols-3,
-  .grid-cols-4 {
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 0.75rem !important;
   }
 }
 
@@ -229,7 +411,18 @@ body {
    ======================================== */
 
 /* Previne zoom em input focus (iOS) */
-@media (max-width: 640px) {
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+select,
+textarea {
+  font-size: 16px !important;
+}
+
+/* Landscape mobile usa font menor para não dar zoom */
+@media (max-width: 920px) and (orientation: landscape) {
   input[type="text"],
   input[type="email"],
   input[type="password"],
@@ -237,26 +430,39 @@ body {
   input[type="tel"],
   select,
   textarea {
-    font-size: 16px !important;
+    font-size: 14px !important;
   }
 }
 
 /* Safe areas para iPhone X+ */
 @supports (padding: max(0px)) {
-  @media (max-width: 640px) {
-    body {
-      padding-left: env(safe-area-inset-left) !important;
-      padding-right: env(safe-area-inset-right) !important;
-      padding-bottom: env(safe-area-inset-bottom) !important;
+  body {
+    padding-left: env(safe-area-inset-left) !important;
+    padding-right: env(safe-area-inset-right) !important;
+    padding-bottom: env(safe-area-inset-bottom) !important;
+  }
+
+  /* Header com safe area */
+  @media (orientation: portrait) {
+    header, nav {
+      padding-top: max(1rem, env(safe-area-inset-top)) !important;
+    }
+  }
+
+  @media (orientation: landscape) {
+    header, nav {
+      padding-top: max(0.5rem, env(safe-area-inset-top)) !important;
+      padding-left: max(0.5rem, env(safe-area-inset-left)) !important;
+      padding-right: max(0.5rem, env(safe-area-inset-right)) !important;
     }
   }
 }
 
-/* Performance - animações mais rápidas em mobile */
-@media (max-width: 640px) {
+/* Performance - animações rápidas */
+@media (max-width: 920px) {
   * {
-    animation-duration: 0.2s !important;
-    transition-duration: 0.2s !important;
+    animation-duration: 0.15s !important;
+    transition-duration: 0.15s !important;
   }
 
   html {
