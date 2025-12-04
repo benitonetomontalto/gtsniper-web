@@ -1,423 +1,451 @@
 /*
  * GT Sniper - CSS Responsivo Mobile & Desktop
- * Adaptação automática para todos os dispositivos
+ * Sobrescreve Tailwind CSS para funcionar perfeitamente em celular
  */
 
 /* ========================================
-   MOBILE-FIRST BASE STYLES
+   RESET E BASE PARA MOBILE
    ======================================== */
 
-* {
-  box-sizing: border-box;
-}
-
+/* Garante que viewport funcione corretamente */
 html {
-  font-size: 16px; /* Base para rem */
   -webkit-text-size-adjust: 100%;
   -ms-text-size-adjust: 100%;
+  -moz-text-size-adjust: 100%;
 }
 
+/* Previne scroll horizontal */
 body {
-  margin: 0;
-  padding: 0;
-  overflow-x: hidden;
-  max-width: 100vw;
+  overflow-x: hidden !important;
+  max-width: 100vw !important;
 }
 
-/* Container principal responsivo */
 #root {
-  width: 100%;
-  min-height: 100vh;
-  overflow-x: hidden;
+  overflow-x: hidden !important;
+  max-width: 100vw !important;
 }
 
 /* ========================================
-   MOBILE (até 768px) - Smartphones
+   MOBILE (até 640px) - SMARTPHONES
    ======================================== */
 
-@media (max-width: 768px) {
-  /* Font sizes menores para mobile */
+@media (max-width: 640px) {
+  /* Reduz fonte base */
   html {
-    font-size: 14px;
+    font-size: 14px !important;
   }
 
-  /* Header e Navbar */
-  header, nav {
-    padding: 0.5rem !important;
-    flex-wrap: wrap !important;
-  }
-
-  nav a, nav button {
-    font-size: 0.9rem !important;
-    padding: 0.4rem 0.6rem !important;
-    margin: 0.2rem !important;
-  }
-
-  /* Logo/Título menor */
-  h1 {
-    font-size: 1.5rem !important;
-  }
-
-  h2 {
-    font-size: 1.3rem !important;
-  }
-
-  h3 {
-    font-size: 1.1rem !important;
-  }
-
-  /* Containers e Cards */
+  /* Container principal com padding menor */
   .container,
-  .main-container,
-  [class*="container"] {
-    padding: 0.5rem !important;
-    margin: 0 !important;
-    width: 100% !important;
+  div[class*="container"],
+  div[class*="mx-auto"],
+  main {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
     max-width: 100% !important;
-  }
-
-  /* Cards de Sinais */
-  .signal-card,
-  .card,
-  [class*="signal"],
-  [class*="card"] {
     width: 100% !important;
-    margin: 0.5rem 0 !important;
-    padding: 0.75rem !important;
-    flex-direction: column !important;
   }
 
-  /* Grid de sinais vira coluna única */
-  .signals-grid,
+  /* Headers menores */
+  h1, .text-4xl, .text-3xl {
+    font-size: 1.5rem !important;
+    line-height: 2rem !important;
+  }
+
+  h2, .text-2xl {
+    font-size: 1.25rem !important;
+    line-height: 1.75rem !important;
+  }
+
+  h3, .text-xl {
+    font-size: 1.125rem !important;
+    line-height: 1.5rem !important;
+  }
+
+  /* GRID - Força 1 coluna em mobile */
   .grid,
-  [class*="grid"] {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 0.5rem !important;
+  div[class*="grid"],
+  div[class*="grid-cols"] {
     grid-template-columns: 1fr !important;
+    gap: 0.75rem !important;
   }
 
-  /* Tabelas responsivas */
-  table {
-    font-size: 0.85rem !important;
-    display: block !important;
-    overflow-x: auto !important;
-    white-space: nowrap !important;
-    -webkit-overflow-scrolling: touch !important;
+  /* Padding e Margin reduzidos */
+  .p-6, .p-8, .p-10, .p-12 {
+    padding: 1rem !important;
   }
 
-  table thead {
-    display: none !important; /* Esconde cabeçalho em mobile */
-  }
-
-  table tr {
-    display: block !important;
-    margin-bottom: 1rem !important;
-    border: 1px solid #333 !important;
-    border-radius: 8px !important;
-    padding: 0.5rem !important;
-  }
-
-  table td {
-    display: block !important;
-    text-align: right !important;
-    padding: 0.5rem !important;
-    border: none !important;
-    position: relative !important;
-    padding-left: 50% !important;
-  }
-
-  table td::before {
-    content: attr(data-label) !important;
-    position: absolute !important;
-    left: 0.5rem !important;
-    font-weight: bold !important;
-    text-align: left !important;
-  }
-
-  /* Botões ocupam linha inteira */
-  button,
-  .button,
-  [class*="button"],
-  [class*="btn"] {
-    width: 100% !important;
+  .p-4, .p-5 {
     padding: 0.75rem !important;
-    margin: 0.25rem 0 !important;
-    font-size: 1rem !important;
   }
 
-  /* Inputs e Forms */
-  input,
+  .px-6, .px-8, .px-12 {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+
+  .py-6, .py-8, .py-12, .py-16 {
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+  }
+
+  .m-4, .m-6, .m-8 {
+    margin: 0.5rem !important;
+  }
+
+  .mb-6, .mb-8 {
+    margin-bottom: 1rem !important;
+  }
+
+  .mt-6, .mt-8 {
+    margin-top: 1rem !important;
+  }
+
+  /* Gap reduzido */
+  .gap-4, .gap-6 {
+    gap: 0.75rem !important;
+  }
+
+  /* Botões ocupam largura total */
+  button,
+  a[class*="button"],
+  button[class*="btn"],
+  input[type="submit"] {
+    width: 100% !important;
+    padding: 0.875rem 1rem !important;
+    font-size: 1rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  /* Inputs largura total */
+  input:not([type="checkbox"]):not([type="radio"]),
   select,
   textarea {
     width: 100% !important;
+    font-size: 16px !important; /* Previne zoom iOS */
     padding: 0.75rem !important;
+  }
+
+  /* Cards com padding menor */
+  div[class*="rounded"],
+  div[class*="border"],
+  div[class*="bg-dark"],
+  div[class*="bg-slate"] {
+    padding: 0.75rem !important;
+    margin-bottom: 0.75rem !important;
+  }
+
+  /* Flex vira coluna */
+  .flex:not(.flex-col),
+  div[class*="flex"]:not([class*="flex-col"]) {
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+  }
+
+  /* Items flex ocupam largura total */
+  .flex > *,
+  div[class*="flex"] > * {
+    width: 100% !important;
+  }
+
+  /* Ícones e SVG menores */
+  svg {
+    width: 1.25rem !important;
+    height: 1.25rem !important;
+  }
+
+  /* Text sizes menores */
+  .text-lg {
     font-size: 1rem !important;
-    margin: 0.25rem 0 !important;
+  }
+
+  .text-sm {
+    font-size: 0.875rem !important;
+  }
+
+  .text-xs {
+    font-size: 0.75rem !important;
+  }
+
+  /* Space between reduzido */
+  .space-y-4 > * + * {
+    margin-top: 0.75rem !important;
+  }
+
+  .space-y-6 > * + * {
+    margin-top: 1rem !important;
+  }
+
+  .space-x-4 > * + * {
+    margin-left: 0 !important;
+    margin-top: 0.75rem !important;
+  }
+
+  /* Modais ocupam tela toda */
+  div[class*="fixed"],
+  div[class*="absolute"] {
+    width: 95% !important;
+    max-width: 95vw !important;
+    left: 2.5% !important;
+    right: 2.5% !important;
+  }
+
+  /* Tabelas responsivas - força scroll horizontal */
+  table {
+    display: block !important;
+    width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    font-size: 0.875rem !important;
+  }
+
+  table thead {
+    font-size: 0.75rem !important;
+  }
+
+  table td,
+  table th {
+    min-width: 80px !important;
+    padding: 0.5rem !important;
+    white-space: nowrap !important;
   }
 
   /* Imagens responsivas */
   img {
     max-width: 100% !important;
     height: auto !important;
-    display: block !important;
   }
 
-  /* Ícones menores */
-  svg,
-  i,
-  .icon {
-    width: 1.25rem !important;
-    height: 1.25rem !important;
-  }
-
-  /* Modais/Popups */
-  .modal,
-  .popup,
-  [class*="modal"],
-  [class*="popup"] {
-    width: 95% !important;
-    max-width: 95vw !important;
-    margin: 0.5rem auto !important;
-    padding: 1rem !important;
-  }
-
-  /* Flexbox para mobile */
-  .flex,
-  [class*="flex"] {
-    flex-direction: column !important;
-    align-items: stretch !important;
-  }
-
-  /* Esconde elementos desnecessários em mobile */
-  .desktop-only,
-  [class*="desktop-only"] {
-    display: none !important;
-  }
-
-  /* Sidebar vira menu hamburguer */
-  .sidebar,
-  aside,
-  [class*="sidebar"] {
-    position: fixed !important;
-    left: -100% !important;
-    top: 0 !important;
-    width: 80% !important;
-    height: 100vh !important;
-    transition: left 0.3s ease !important;
-    z-index: 1000 !important;
-  }
-
-  .sidebar.open {
-    left: 0 !important;
-  }
-
-  /* Gráficos responsivos */
-  canvas,
-  .chart,
-  [class*="chart"] {
+  /* Max width para elementos grandes */
+  div[class*="max-w"],
+  div[class*="w-80"],
+  div[class*="w-96"] {
     max-width: 100% !important;
-    height: auto !important;
-    min-height: 200px !important;
-  }
-
-  /* Estatísticas em coluna */
-  .stats,
-  .statistics,
-  [class*="stat"] {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 0.5rem !important;
-  }
-
-  .stat-item,
-  [class*="stat-item"] {
     width: 100% !important;
-    padding: 0.5rem !important;
-    margin: 0.25rem 0 !important;
   }
 
-  /* Padding e Margin ajustados */
-  .p-4, .p-5, .p-6 {
-    padding: 0.75rem !important;
-  }
-
-  .m-4, .m-5, .m-6 {
-    margin: 0.5rem !important;
-  }
-
-  /* ScrollBar mais fina */
+  /* ScrollBars mais finas */
   ::-webkit-scrollbar {
     width: 4px !important;
     height: 4px !important;
   }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.3) !important;
+    border-radius: 2px !important;
+  }
+
+  /* Touch-friendly - áreas de toque mínimas */
+  a,
+  button,
+  input[type="checkbox"],
+  input[type="radio"],
+  label {
+    min-height: 44px !important;
+    min-width: 44px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  /* Esconde textos longos com ellipsis */
+  .text-xs,
+  .text-sm {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
 }
 
 /* ========================================
-   TABLET (769px - 1024px)
+   TABLET (641px - 768px)
    ======================================== */
 
-@media (min-width: 769px) and (max-width: 1024px) {
+@media (min-width: 641px) and (max-width: 768px) {
   html {
-    font-size: 15px;
+    font-size: 15px !important;
   }
 
-  /* Grid de 2 colunas em tablets */
-  .signals-grid,
+  /* Grid de 2 colunas */
   .grid,
-  [class*="grid"] {
+  div[class*="grid-cols-3"],
+  div[class*="grid-cols-4"] {
     grid-template-columns: repeat(2, 1fr) !important;
-    gap: 1rem !important;
   }
 
-  /* Containers com padding médio */
-  .container,
-  [class*="container"] {
+  .container {
     padding: 1rem !important;
   }
 
-  /* Cards menores */
-  .card,
-  .signal-card {
-    padding: 1rem !important;
-  }
-
-  /* Tabelas com scroll horizontal */
-  table {
-    display: table !important;
-    overflow-x: auto !important;
-    font-size: 0.9rem !important;
-  }
-
-  /* Botões com largura automática */
-  button,
-  .button {
+  button {
     width: auto !important;
     min-width: 120px !important;
   }
 }
 
 /* ========================================
-   DESKTOP (acima de 1024px)
+   LANDSCAPE MOBILE (até 768px altura)
+   ======================================== */
+
+@media (max-width: 768px) and (orientation: landscape) {
+  /* Ajusta altura para landscape */
+  html {
+    font-size: 13px !important;
+  }
+
+  /* Padding vertical reduzido */
+  .py-6,
+  .py-8,
+  .py-12 {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+  }
+
+  .p-6,
+  .p-8 {
+    padding: 0.75rem !important;
+  }
+
+  /* Grid 2 colunas em landscape mobile */
+  .grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.5rem !important;
+  }
+
+  /* Header menor */
+  h1,
+  .text-4xl,
+  .text-3xl {
+    font-size: 1.25rem !important;
+    line-height: 1.5rem !important;
+  }
+
+  /* Modais menores em landscape */
+  div[class*="fixed"] {
+    max-height: 85vh !important;
+    overflow-y: auto !important;
+  }
+}
+
+/* ========================================
+   DESKTOP (acima de 1024px) - MANTÉM NORMAL
    ======================================== */
 
 @media (min-width: 1025px) {
-  /* Grid de 3 colunas em desktop */
-  .signals-grid,
-  [class*="grid"] {
+  /* Desktop funciona normal - não sobrescreve nada */
+  .grid-cols-3 {
     grid-template-columns: repeat(3, 1fr) !important;
-    gap: 1.5rem !important;
   }
 
-  /* Containers com largura máxima */
-  .container,
-  [class*="container"] {
-    max-width: 1400px !important;
-    margin: 0 auto !important;
-    padding: 1.5rem !important;
+  .grid-cols-4 {
+    grid-template-columns: repeat(4, 1fr) !important;
+  }
+}
+
+/* ========================================
+   FIXES ESPECÍFICOS PARA PROBLEMAS COMUNS
+   ======================================== */
+
+/* Previne zoom em input focus (iOS) */
+@media (max-width: 640px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="tel"],
+  select,
+  textarea {
+    font-size: 16px !important; /* iOS não dá zoom se >= 16px */
+  }
+}
+
+/* Safe areas para iPhone X+ */
+@supports (padding: max(0px)) {
+  @media (max-width: 640px) {
+    body {
+      padding-left: env(safe-area-inset-left) !important;
+      padding-right: env(safe-area-inset-right) !important;
+      padding-bottom: env(safe-area-inset-bottom) !important;
+    }
+
+    /* Header com safe area top */
+    header,
+    nav {
+      padding-top: max(1rem, env(safe-area-inset-top)) !important;
+    }
+  }
+}
+
+/* Performance - reduz animações em mobile */
+@media (max-width: 640px) {
+  * {
+    animation-duration: 0.2s !important;
+    transition-duration: 0.2s !important;
   }
 
-  /* Mostra elementos desktop */
-  .mobile-only {
+  /* Smooth scroll */
+  html {
+    scroll-behavior: smooth !important;
+  }
+}
+
+/* Desabilita animações se usuário preferir */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ========================================
+   CLASSES UTILITÁRIAS MOBILE
+   ======================================== */
+
+/* Esconde em mobile */
+@media (max-width: 640px) {
+  .desktop-only,
+  [class*="desktop-only"] {
+    display: none !important;
+  }
+}
+
+/* Esconde em desktop */
+@media (min-width: 641px) {
+  .mobile-only,
+  [class*="mobile-only"] {
     display: none !important;
   }
 }
 
 /* ========================================
-   DESKTOP LARGE (acima de 1440px)
+   DARK MODE (respeita preferência)
    ======================================== */
 
-@media (min-width: 1441px) {
-  html {
-    font-size: 18px;
-  }
-
-  /* Grid de 4 colunas em telas grandes */
-  .signals-grid,
-  [class*="grid"] {
-    grid-template-columns: repeat(4, 1fr) !important;
-  }
-
-  .container,
-  [class*="container"] {
-    max-width: 1600px !important;
-  }
-}
-
-/* ========================================
-   ORIENTAÇÃO - Landscape Mobile
-   ======================================== */
-
-@media (max-width: 768px) and (orientation: landscape) {
-  /* Ajusta altura em landscape */
-  .container,
-  [class*="container"] {
-    max-height: 90vh !important;
-    overflow-y: auto !important;
-  }
-
-  /* Header menor em landscape */
-  header, nav {
-    padding: 0.25rem !important;
-  }
-
-  /* Grid de 2 colunas em landscape mobile */
-  .signals-grid,
-  [class*="grid"] {
-    grid-template-columns: repeat(2, 1fr) !important;
-  }
-}
-
-/* ========================================
-   UTILITÁRIOS RESPONSIVOS
-   ======================================== */
-
-/* Touch-friendly - Áreas de toque maiores */
-@media (max-width: 768px) {
-  a, button, input[type="checkbox"], input[type="radio"] {
-    min-height: 44px !important; /* Recomendação Apple/Google */
-    min-width: 44px !important;
-  }
-}
-
-/* Prevent zoom on input focus (iOS) */
-@media (max-width: 768px) {
-  input[type="text"],
-  input[type="email"],
-  input[type="password"],
-  input[type="number"],
-  select,
-  textarea {
-    font-size: 16px !important; /* Previne zoom no iOS */
-  }
-}
-
-/* Safe areas para notch (iPhone X+) */
-@supports (padding: max(0px)) {
+@media (prefers-color-scheme: dark) {
   body {
-    padding-left: max(0px, env(safe-area-inset-left)) !important;
-    padding-right: max(0px, env(safe-area-inset-right)) !important;
-    padding-bottom: max(0px, env(safe-area-inset-bottom)) !important;
+    background-color: #0f1419 !important;
   }
 }
 
-/* ========================================
-   ANIMAÇÕES RESPONSIVAS
-   ======================================== */
-
-/* Reduz animações em mobile para performance */
-@media (max-width: 768px) {
-  * {
-    animation-duration: 0.3s !important;
-    transition-duration: 0.3s !important;
+@media (prefers-color-scheme: light) {
+  body {
+    background-color: #ffffff !important;
+    color: #1a1a1a !important;
   }
 
-  /* Desabilita animações complexas em mobile */
-  @media (prefers-reduced-motion: reduce) {
-    * {
-      animation: none !important;
-      transition: none !important;
-    }
+  /* Ajusta contraste em light mode */
+  .bg-dark-300,
+  .bg-dark-200,
+  .bg-dark-100 {
+    background-color: #f5f5f5 !important;
+  }
+
+  .text-white {
+    color: #1a1a1a !important;
+  }
+
+  .border-gray-700,
+  .border-gray-800 {
+    border-color: #e5e5e5 !important;
   }
 }
 
@@ -426,38 +454,21 @@ body {
    ======================================== */
 
 @media print {
-  /* Remove elementos desnecessários na impressão */
-  nav, header, aside, .sidebar, button {
+  nav,
+  header,
+  aside,
+  button,
+  .no-print {
     display: none !important;
   }
 
-  /* Ajusta para impressão */
   * {
     background: white !important;
     color: black !important;
   }
 
-  table {
-    page-break-inside: avoid !important;
-  }
-}
-
-/* ========================================
-   DARK MODE (respeitando preferência do sistema)
-   ======================================== */
-
-@media (prefers-color-scheme: dark) {
-  /* Já tem dark mode, mas garante boa legibilidade */
   body {
-    background-color: #0a0a0a !important;
-    color: #f0f0f0 !important;
-  }
-}
-
-@media (prefers-color-scheme: light) {
-  /* Caso usuário prefira light mode */
-  body {
-    background-color: #ffffff !important;
-    color: #1a1a1a !important;
+    margin: 0 !important;
+    padding: 1cm !important;
   }
 }
