@@ -1,72 +1,62 @@
 /**
- * BROKER SELECTOR PATCH
- * Adiciona seleção de broker (IQ Option / Pocket Option) no login
- *
- * INSTALAÇÃO:
- * 1. Adicionar <script src="/assets/broker-selector-patch.js"></script> no index.html
- * 2. Este script modifica o DOM após carregar para adicionar seleção de broker
+ * BROKER SELECTOR PATCH V2
+ * NÃO intercepta o formulário, apenas adiciona campos ao request existente
  */
 
 (function() {
     'use strict';
 
-    console.log('[BROKER PATCH] Inicializando patch de seleção de broker...');
+    console.log('[BROKER PATCH V2] Inicializando...');
 
-    // Aguardar DOM carregar
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initBrokerSelector);
+        document.addEventListener('DOMContentLoaded', init);
     } else {
-        initBrokerSelector();
+        init();
     }
 
-    function initBrokerSelector() {
-        console.log('[BROKER PATCH] DOM carregado, procurando formulário de login...');
+    function init() {
+        console.log('[BROKER PATCH V2] DOM carregado');
 
-        // Tentar encontrar formulário de login (retry até 10 segundos)
         let attempts = 0;
         const maxAttempts = 20;
 
         const interval = setInterval(() => {
             attempts++;
 
-            // Procurar pelo input de email IQ Option
             const iqEmailInput = document.querySelector('input[placeholder*="Email IQ Option"], input[placeholder*="email@iqoption"]');
 
             if (iqEmailInput) {
-                console.log('[BROKER PATCH] Formulário de login encontrado!');
+                console.log('[BROKER PATCH V2] Formulário encontrado!');
                 clearInterval(interval);
                 injectBrokerSelector(iqEmailInput);
             } else if (attempts >= maxAttempts) {
-                console.warn('[BROKER PATCH] Formulário de login não encontrado após 10 segundos');
+                console.warn('[BROKER PATCH V2] Formulário não encontrado');
                 clearInterval(interval);
             }
         }, 500);
     }
 
     function injectBrokerSelector(iqEmailInput) {
-        // Verificar se já foi injetado
-        if (document.getElementById('broker-selector-container')) {
-            console.log('[BROKER PATCH] Seletor já injetado, abortando');
+        if (document.getElementById('broker-selector-v2')) {
             return;
         }
 
-        console.log('[BROKER PATCH] Injetando seletor de broker...');
+        console.log('[BROKER PATCH V2] Injetando seletor...');
 
-        // Encontrar o container pai do formulário
         const formContainer = iqEmailInput.closest('div[class*="space-y"], div[class*="flex"], form');
 
         if (!formContainer) {
-            console.error('[BROKER PATCH] Container do formulário não encontrado');
+            console.error('[BROKER PATCH V2] Container não encontrado');
             return;
         }
 
-        // Criar seletor de broker
-        const brokerSelectorHTML = `
-            <div id="broker-selector-container" style="margin-bottom: 1rem;">
+        // Criar seletor
+        const selectorHTML = `
+            <div id="broker-selector-v2" style="margin-bottom: 1rem;">
                 <label style="display: block; font-size: 0.875rem; font-weight: 500; color: #fff; margin-bottom: 0.5rem;">
                     🏦 Selecione a Corretora
                 </label>
-                <select id="broker-type-select" style="
+                <select id="broker-type-v2" style="
                     width: 100%;
                     padding: 0.625rem;
                     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -82,15 +72,14 @@
                 </select>
             </div>
 
-            <!-- Container para campos Pocket Option (inicialmente oculto) -->
-            <div id="pocketoption-fields" style="display: none; margin-bottom: 1rem;">
+            <div id="pocketoption-fields-v2" style="display: none; margin-bottom: 1rem;">
                 <label style="display: block; font-size: 0.875rem; font-weight: 500; color: #fff; margin-bottom: 0.5rem;">
                     🔑 SSID da Pocket Option
                 </label>
                 <input
                     type="text"
-                    id="pocketoption-ssid-input"
-                    placeholder="Cole aqui o SSID do cookie..."
+                    id="pocketoption-ssid-v2"
+                    placeholder="Cole o SSID aqui..."
                     style="
                         width: 100%;
                         padding: 0.625rem;
@@ -104,7 +93,7 @@
                 />
                 <button
                     type="button"
-                    id="show-ssid-instructions"
+                    id="ssid-help-v2"
                     style="
                         margin-top: 0.5rem;
                         padding: 0.5rem 1rem;
@@ -123,7 +112,7 @@
                 <label style="display: block; font-size: 0.875rem; font-weight: 500; color: #fff; margin-top: 1rem; margin-bottom: 0.5rem;">
                     Tipo de Conta
                 </label>
-                <select id="pocketoption-account-type" style="
+                <select id="pocketoption-account-v2" style="
                     width: 100%;
                     padding: 0.625rem;
                     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -139,61 +128,52 @@
             </div>
         `;
 
-        // Inserir seletor ANTES dos campos de email
-        iqEmailInput.closest('div').insertAdjacentHTML('beforebegin', brokerSelectorHTML);
+        iqEmailInput.closest('div').insertAdjacentHTML('beforebegin', selectorHTML);
 
-        // Encontrar containers dos campos IQ Option
+        // Campos IQ Option
         const iqEmailContainer = iqEmailInput.closest('div[class*="space-y"], div');
         const iqPasswordInput = document.querySelector('input[type="password"][placeholder*="Senha"]');
         const iqPasswordContainer = iqPasswordInput ? iqPasswordInput.closest('div[class*="space-y"], div') : null;
         const iqAccountTypeSelect = document.querySelector('select option[value*="REAL"]')?.closest('select');
         const iqAccountTypeContainer = iqAccountTypeSelect ? iqAccountTypeSelect.closest('div[class*="space-y"], div') : null;
 
-        console.log('[BROKER PATCH] Campos IQ Option encontrados:', {
-            email: !!iqEmailContainer,
-            password: !!iqPasswordContainer,
-            accountType: !!iqAccountTypeContainer
-        });
-
-        // Event listener para trocar broker
-        const brokerSelect = document.getElementById('broker-type-select');
-        const pocketFields = document.getElementById('pocketoption-fields');
+        // Event: troca de broker
+        const brokerSelect = document.getElementById('broker-type-v2');
+        const pocketFields = document.getElementById('pocketoption-fields-v2');
 
         brokerSelect.addEventListener('change', (e) => {
-            const selectedBroker = e.target.value;
-            console.log('[BROKER PATCH] Broker selecionado:', selectedBroker);
+            const broker = e.target.value;
+            console.log('[BROKER PATCH V2] Broker:', broker);
 
-            if (selectedBroker === 'pocketoption') {
-                // Mostrar campos Pocket Option
+            // Armazenar escolha
+            localStorage.setItem('selected_broker', broker);
+
+            if (broker === 'pocketoption') {
                 pocketFields.style.display = 'block';
-
-                // Esconder campos IQ Option
                 if (iqEmailContainer) iqEmailContainer.style.display = 'none';
                 if (iqPasswordContainer) iqPasswordContainer.style.display = 'none';
                 if (iqAccountTypeContainer) iqAccountTypeContainer.style.display = 'none';
             } else {
-                // Mostrar campos IQ Option
                 pocketFields.style.display = 'none';
-
                 if (iqEmailContainer) iqEmailContainer.style.display = 'block';
                 if (iqPasswordContainer) iqPasswordContainer.style.display = 'block';
                 if (iqAccountTypeContainer) iqAccountTypeContainer.style.display = 'block';
             }
         });
 
-        // Botão de instruções SSID
-        document.getElementById('show-ssid-instructions').addEventListener('click', showSSIDModal);
+        // Event: modal SSID
+        document.getElementById('ssid-help-v2').addEventListener('click', showModal);
 
-        // Interceptar submissão do formulário
-        interceptFormSubmit();
+        // IMPORTANTE: NÃO interceptar o submit
+        // Em vez disso, usar MutationObserver para injetar dados no request
+        enhanceFormData();
 
-        console.log('[BROKER PATCH] Seletor de broker injetado com sucesso! ✅');
+        console.log('[BROKER PATCH V2] ✅ Seletor injetado!');
     }
 
-    function showSSIDModal() {
-        // Criar modal
-        const modalHTML = `
-            <div id="ssid-modal" style="
+    function showModal() {
+        const modal = `
+            <div id="ssid-modal-v2" style="
                 position: fixed;
                 top: 0;
                 left: 0;
@@ -204,7 +184,7 @@
                 justify-content: center;
                 align-items: center;
                 z-index: 10000;
-            ">
+            " onclick="if(event.target.id==='ssid-modal-v2') this.remove()">
                 <div style="
                     background: #1a1a2e;
                     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -216,37 +196,20 @@
                     color: white;
                 ">
                     <h3 style="font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem;">
-                        🔑 Como obter SSID da Pocket Option
+                        🔑 Como obter SSID
                     </h3>
-
                     <ol style="margin-left: 1.5rem; line-height: 1.8;">
-                        <li>Abra <a href="https://pocketoption.com" target="_blank" style="color: #60a5fa;">https://pocketoption.com</a> no navegador</li>
-                        <li>Faça login normalmente</li>
-                        <li>Pressione <strong>F12</strong> para abrir DevTools</li>
-                        <li>Vá na aba <strong>"Application"</strong> (Chrome) ou <strong>"Storage"</strong> (Firefox)</li>
-                        <li>No menu lateral, expanda <strong>"Cookies"</strong></li>
-                        <li>Clique em <strong>"https://pocketoption.com"</strong></li>
-                        <li>Procure o cookie chamado <strong>"ssid"</strong></li>
-                        <li>Copie o <strong>VALOR</strong> do cookie (string longa)</li>
-                        <li>Cole aqui no campo SSID</li>
+                        <li>Abra <a href="https://pocketoption.com" target="_blank" style="color: #60a5fa;">pocketoption.com</a></li>
+                        <li>Faça login</li>
+                        <li>Pressione <strong>F12</strong></li>
+                        <li>Aba <strong>Application</strong> (Chrome) ou <strong>Storage</strong> (Firefox)</li>
+                        <li>Expanda <strong>Cookies</strong></li>
+                        <li>Clique em <strong>https://pocketoption.com</strong></li>
+                        <li>Procure cookie <strong>ssid</strong></li>
+                        <li>Copie o <strong>VALOR</strong></li>
+                        <li>Cole acima</li>
                     </ol>
-
-                    <div style="
-                        margin-top: 1.5rem;
-                        padding: 1rem;
-                        background: rgba(239, 68, 68, 0.1);
-                        border: 1px solid rgba(239, 68, 68, 0.3);
-                        border-radius: 0.5rem;
-                    ">
-                        <strong style="color: #f87171;">⚠️ IMPORTANTE:</strong>
-                        <ul style="margin-left: 1.5rem; margin-top: 0.5rem; line-height: 1.6;">
-                            <li>O SSID expira após algumas horas</li>
-                            <li>Você precisará renovar quando expirar</li>
-                            <li>Não compartilhe seu SSID (é como uma senha)</li>
-                        </ul>
-                    </div>
-
-                    <button onclick="document.getElementById('ssid-modal').remove()" style="
+                    <button onclick="this.closest('#ssid-modal-v2').remove()" style="
                         margin-top: 1.5rem;
                         width: 100%;
                         padding: 0.75rem;
@@ -256,99 +219,61 @@
                         border-radius: 0.5rem;
                         font-weight: 600;
                         cursor: pointer;
-                    ">
-                        Entendi
-                    </button>
+                    ">Entendi</button>
                 </div>
             </div>
         `;
-
-        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        document.body.insertAdjacentHTML('beforeend', modal);
     }
 
-    function interceptFormSubmit() {
-        console.log('[BROKER PATCH] Interceptando submissão do formulário...');
+    function enhanceFormData() {
+        // Interceptar fetch/xhr globalmente
+        const originalFetch = window.fetch;
 
-        // Encontrar botão de submit
-        const submitButton = Array.from(document.querySelectorAll('button')).find(btn =>
-            btn.textContent.includes('Conectar') || btn.textContent.includes('Entrar')
-        );
+        window.fetch = async function(...args) {
+            const [url, options = {}] = args;
 
-        if (!submitButton) {
-            console.warn('[BROKER PATCH] Botão de submit não encontrado');
-            return;
-        }
+            // Se for request de login
+            if (url && url.includes('/login')) {
+                console.log('[BROKER PATCH V2] Interceptando request de login');
 
-        // Armazenar handler original
-        const originalClickHandler = submitButton.onclick;
+                const broker = localStorage.getItem('selected_broker') || 'iqoption';
 
-        // Substituir handler
-        submitButton.onclick = async function(e) {
-            e.preventDefault();
-            console.log('[BROKER PATCH] Formulário submetido, processando...');
-
-            const brokerType = document.getElementById('broker-type-select').value;
-
-            // Construir objeto de login baseado no broker selecionado
-            const loginData = {
-                username: document.querySelector('input[type="text"]')?.value || 'user',
-                access_token: localStorage.getItem('activation_token') || '',
-                broker_type: brokerType
-            };
-
-            if (brokerType === 'iqoption') {
-                const emailInput = document.querySelector('input[placeholder*="Email IQ Option"]');
-                const passwordInput = document.querySelector('input[type="password"]');
-                const accountTypeSelect = document.querySelector('select option[value*="REAL"]')?.closest('select');
-
-                loginData.iqoption_email = emailInput?.value;
-                loginData.iqoption_password = passwordInput?.value;
-                loginData.iqoption_account_type = accountTypeSelect?.value || 'PRACTICE';
-            } else if (brokerType === 'pocketoption') {
-                const ssidInput = document.getElementById('pocketoption-ssid-input');
-                const accountTypeSelect = document.getElementById('pocketoption-account-type');
-
-                loginData.pocketoption_ssid = ssidInput?.value;
-                loginData.pocketoption_account_type = accountTypeSelect?.value || 'PRACTICE';
-            }
-
-            console.log('[BROKER PATCH] Dados de login:', { ...loginData, iqoption_password: '***', pocketoption_ssid: loginData.pocketoption_ssid ? '***' : undefined });
-
-            // Fazer request customizado
-            try {
-                const response = await fetch('/api/auth/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(loginData)
-                });
-
-                const data = await response.json();
-                console.log('[BROKER PATCH] Resposta do login:', data);
-
-                if (data.broker_connected) {
-                    console.log(`[BROKER PATCH] ✅ Conectado ao ${data.broker_type}`);
-
-                    // Armazenar dados
-                    localStorage.setItem('access_token', data.access_token);
-                    localStorage.setItem('broker_type', data.broker_type);
-                    localStorage.setItem('broker_balance', data.broker_balance);
-
-                    // Chamar handler original se existir
-                    if (originalClickHandler) {
-                        originalClickHandler.call(submitButton, e);
-                    } else {
-                        // Redirecionar manualmente
-                        window.location.reload();
+                // Parse body existente
+                let body = {};
+                if (options.body) {
+                    try {
+                        body = JSON.parse(options.body);
+                    } catch(e) {
+                        body = {};
                     }
-                } else {
-                    alert(`❌ Erro ao conectar: ${data.broker_message || 'Erro desconhecido'}`);
                 }
-            } catch (error) {
-                console.error('[BROKER PATCH] Erro no login:', error);
-                alert(`❌ Erro ao conectar: ${error.message}`);
+
+                // Adicionar broker_type
+                body.broker_type = broker;
+
+                // Adicionar credenciais Pocket Option
+                if (broker === 'pocketoption') {
+                    const ssid = document.getElementById('pocketoption-ssid-v2')?.value;
+                    const account = document.getElementById('pocketoption-account-v2')?.value;
+
+                    body.pocketoption_ssid = ssid;
+                    body.pocketoption_account_type = account || 'PRACTICE';
+
+                    // Remover campos IQ Option
+                    delete body.iqoption_email;
+                    delete body.iqoption_password;
+                }
+
+                console.log('[BROKER PATCH V2] Body modificado:', { ...body, iqoption_password: '***', pocketoption_ssid: body.pocketoption_ssid ? '***' : undefined });
+
+                // Atualizar options
+                options.body = JSON.stringify(body);
             }
+
+            return originalFetch.apply(this, [url, options]);
         };
 
-        console.log('[BROKER PATCH] Interceptação de formulário configurada ✅');
+        console.log('[BROKER PATCH V2] Fetch interceptado');
     }
 })();
