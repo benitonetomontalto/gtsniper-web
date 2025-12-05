@@ -11,9 +11,18 @@ class LoginRequest(BaseModel):
     username: str
     password: Optional[str] = None  # Senha opcional
     access_token: Optional[str] = None
+
+    # Broker selection (new multi-broker support)
+    broker_type: Optional[str] = Field(default="iqoption", description="Broker type: iqoption or pocketoption")
+
+    # IQ Option credentials
     iqoption_email: Optional[str] = None
     iqoption_password: Optional[str] = None
     iqoption_account_type: Optional[str] = None
+
+    # Pocket Option credentials
+    pocketoption_ssid: Optional[str] = None
+    pocketoption_account_type: Optional[str] = None
 
 
 class TokenResponse(BaseModel):
@@ -22,6 +31,15 @@ class TokenResponse(BaseModel):
     user_id: str
     access_message: Optional[str] = None
     access_token_label: Optional[str] = None
+
+    # Broker connection info (generic)
+    broker_type: Optional[str] = None
+    broker_connected: Optional[bool] = None
+    broker_message: Optional[str] = None
+    broker_balance: Optional[float] = None
+    broker_account_type: Optional[str] = None
+
+    # Backward compatibility (deprecated - use broker_* fields)
     iq_option_connected: Optional[bool] = None
     iq_option_message: Optional[str] = None
     iq_option_balance: Optional[float] = None
@@ -226,3 +244,21 @@ class ForexAnalysisResponse(BaseModel):
     resistance_levels: List[float]
     recommendation: Optional[str] = None
     signals: List[ForexSignal]
+
+
+# ============================================================================
+# BROKER MODELS (Multi-Broker Support)
+# ============================================================================
+
+# Available Broker Info
+class BrokerInfo(BaseModel):
+    broker_type: str  # "iqoption", "pocketoption"
+    name: str  # "IQ Option", "Pocket Option"
+    available: bool  # Se biblioteca está disponível
+    auth_type: str  # "email_password" ou "ssid"
+    description: Optional[str] = None
+
+
+# List of Available Brokers Response
+class AvailableBrokersResponse(BaseModel):
+    brokers: List[BrokerInfo]

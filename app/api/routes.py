@@ -14,7 +14,9 @@ from ..models.schemas import (
     ScanConfig,
     UserSettings,
     TradingStats,
-    SignalResponse
+    SignalResponse,
+    BrokerInfo,
+    AvailableBrokersResponse
 )
 from ..core.security import create_access_token, get_current_user
 from ..core.token_manager import access_token_manager
@@ -26,12 +28,17 @@ from ..services.scanner.auto_scanner import AutoScanner
 from ..services.scanner.signal_generator import SignalGenerator
 from ..websocket.signal_websocket import ws_manager
 from ..services.iqoption import get_session_manager
+from ..services.brokers.broker_factory import BrokerFactory
+from ..services.brokers.base_broker import BaseBroker
 
 router = APIRouter()
 
 # Global scanner instance (in production, use dependency injection)
 _scanner_instances: Dict[str, AutoScanner] = {}
 _scanner_tasks: Dict[str, asyncio.Task] = {}
+
+# Multi-broker support: Store broker instances per user
+_broker_instances: Dict[str, BaseBroker] = {}
 
 
 @router.post("/auth/login", response_model=TokenResponse)
@@ -84,6 +91,14 @@ async def login(request: LoginRequest):
     # Create access token
     access_token = create_access_token(data=user_data)
 
+    # Multi-broker support
+    broker_type = getattr(request, "broker_type", "iqoption") or "iqoption"
+    broker_connected = False
+    broker_message: Optional[str] = None
+    broker_balance: Optional[float] = None
+    broker_account_type: Optional[str] = None
+
+    # Backward compatibility
     iq_option_connected = False
     iq_option_message: Optional[str] = None
     iq_option_balance: Optional[float] = None
@@ -91,52 +106,115 @@ async def login(request: LoginRequest):
     iq_option_two_factor_required: bool = False
     iq_option_two_factor_message: Optional[str] = None
 
-    session_manager = get_session_manager()
+    print(f"[LOGIN] Broker selecionado: {broker_type}")
 
-    # Se credenciais IQ Option foram fornecidas, conectar à API real
-    if hasattr(request, 'iqoption_email') and request.iqoption_email and hasattr(request, 'iqoption_password') and request.iqoption_password:
-        print(f"[LOGIN] Conectando ao IQ Option com email: {request.iqoption_email}")
+    # IQ Option (via session manager - código legado ou novo sistema)
+    if broker_type.lower() == "iqoption":
+        if hasattr(request, 'iqoption_email') and request.iqoption_email and hasattr(request, 'iqoption_password') and request.iqoption_password:
+            session_manager = get_session_manager()
+            print(f"[LOGIN] Conectando ao IQ Option com email: {request.iqoption_email}")
 
-        try:
-            requested_account_type = getattr(request, "iqoption_account_type", None)
+            try:
+                requested_account_type = getattr(request, "iqoption_account_type", None)
 
-            # Tenta conectar com o tipo de conta especificado (SEM FALLBACK AUTOMÁTICO)
-            connected, message = await session_manager.connect_user(
-                username=request.username,
-                email=request.iqoption_email,
-                password=request.iqoption_password,
-                account_type=requested_account_type
-            )
-            iq_option_connected = connected
-            iq_option_message = message
+                # Tenta conectar com o tipo de conta especificado (SEM FALLBACK AUTOMÁTICO)
+                connected, message = await session_manager.connect_user(
+                    username=request.username,
+                    email=request.iqoption_email,
+                    password=request.iqoption_password,
+                    account_type=requested_account_type
+                )
+                broker_connected = connected
+                broker_message = message
+                iq_option_connected = connected
+                iq_option_message = message
 
-            print(f"[LOGIN] Conexão IQ Option - Tipo solicitado: {requested_account_type}, Sucesso: {connected}")
+                print(f"[LOGIN] Conexão IQ Option - Tipo solicitado: {requested_account_type}, Sucesso: {connected}")
 
-            client = session_manager.get_client(request.username)
-            if client and client.awaiting_two_factor:
-                iq_option_two_factor_required = True
-                iq_option_two_factor_message = client.two_factor_message
-                iq_option_connected = False
-                iq_option_message = client.two_factor_message or iq_option_message
-            elif connected and client:
-                print("[LOGIN] OK. Conectado ao IQ Option com sucesso!")
-                balance_info = await client.get_balance()
-                if isinstance(balance_info, dict):
-                    iq_option_balance = balance_info.get("balance")
-                    iq_option_account_type = client.account_type or balance_info.get("account_type")
+                client = session_manager.get_client(request.username)
+                if client and client.awaiting_two_factor:
+                    iq_option_two_factor_required = True
+                    iq_option_two_factor_message = client.two_factor_message
+                    broker_connected = False
+                    iq_option_connected = False
+                    broker_message = client.two_factor_message or message
+                    iq_option_message = broker_message
+                elif connected and client:
+                    print("[LOGIN] OK. Conectado ao IQ Option com sucesso!")
+                    balance_info = await client.get_balance()
+                    if isinstance(balance_info, dict):
+                        broker_balance = balance_info.get("balance")
+                        iq_option_balance = broker_balance
+                        broker_account_type = client.account_type or balance_info.get("account_type")
+                        iq_option_account_type = broker_account_type
+                    else:
+                        broker_account_type = client.account_type
+                        iq_option_account_type = client.account_type
+                elif not connected:
+                    print(f"[LOGIN] ERRO ao conectar ao IQ Option: {broker_message}")
+            except Exception as e:
+                broker_message = str(e)
+                iq_option_message = str(e)
+                print(f"[LOGIN] ERRO ao conectar IQ Option: {e}")
+
+    # Pocket Option (via BrokerFactory)
+    elif broker_type.lower() == "pocketoption":
+        if hasattr(request, 'pocketoption_ssid') and request.pocketoption_ssid:
+            print(f"[LOGIN] Conectando ao Pocket Option com SSID")
+
+            try:
+                # Criar broker via factory
+                broker = BrokerFactory.create_broker("pocketoption")
+                if not broker:
+                    broker_message = "Pocket Option não disponível - biblioteca não instalada"
+                    print(f"[LOGIN] ERRO: {broker_message}")
                 else:
-                    iq_option_account_type = client.account_type
-            elif not connected:
-                print(f"[LOGIN] ERRO ao conectar ao IQ Option: {iq_option_message}")
-        except Exception as e:
-            iq_option_message = str(e)
-            print(f"[LOGIN] ERRO ao conectar IQ Option: {e}")
+                    # Conectar com SSID
+                    credentials = {
+                        "ssid": request.pocketoption_ssid
+                    }
+
+                    connected = await broker.connect(credentials)
+                    broker_connected = connected
+
+                    if connected:
+                        print("[LOGIN] OK. Conectado ao Pocket Option com sucesso!")
+
+                        # Obter saldo
+                        broker_balance = await broker.get_balance()
+
+                        # Mudar tipo de conta se especificado
+                        requested_account_type = getattr(request, "pocketoption_account_type", None)
+                        if requested_account_type:
+                            await broker.switch_account(requested_account_type)
+                            broker_account_type = requested_account_type
+                        else:
+                            broker_account_type = "PRACTICE"  # Default
+
+                        broker_message = f"Conectado ao Pocket Option. Saldo: ${broker_balance}"
+
+                        # Armazenar broker instance
+                        _broker_instances[request.username] = broker
+                    else:
+                        broker_message = "Falha ao conectar - SSID inválido ou expirado"
+                        print(f"[LOGIN] ERRO: {broker_message}")
+
+            except Exception as e:
+                broker_message = str(e)
+                print(f"[LOGIN] ERRO ao conectar Pocket Option: {e}")
 
     return TokenResponse(
         access_token=access_token,
         user_id=request.username,
         access_message=token_message,
         access_token_label=token_label,
+        # New multi-broker fields
+        broker_type=broker_type,
+        broker_connected=broker_connected,
+        broker_message=broker_message,
+        broker_balance=broker_balance,
+        broker_account_type=broker_account_type,
+        # Backward compatibility
         iq_option_connected=iq_option_connected,
         iq_option_message=iq_option_message,
         iq_option_balance=iq_option_balance,
@@ -144,6 +222,44 @@ async def login(request: LoginRequest):
         iq_option_two_factor_required=iq_option_two_factor_required,
         iq_option_two_factor_message=iq_option_two_factor_message
     )
+
+
+@router.get("/brokers/available", response_model=AvailableBrokersResponse)
+async def get_available_brokers():
+    """
+    Get list of available brokers
+
+    Returns:
+        List of brokers with their availability status
+    """
+    brokers = []
+
+    # IQ Option (sempre disponível via código legado)
+    brokers.append(BrokerInfo(
+        broker_type="iqoption",
+        name="IQ Option",
+        available=True,
+        auth_type="email_password",
+        description="Conecta via email e senha. Suporta contas PRACTICE e REAL."
+    ))
+
+    # Pocket Option (verificar se biblioteca está disponível)
+    try:
+        from pocketoptionapi.stable_api import PocketOption
+        pocket_available = True
+    except ImportError:
+        pocket_available = False
+
+    brokers.append(BrokerInfo(
+        broker_type="pocketoption",
+        name="Pocket Option",
+        available=pocket_available,
+        auth_type="ssid",
+        description="Conecta via SSID (Session ID do navegador). " +
+                   ("Disponível." if pocket_available else "Biblioteca não instalada - execute: pip install git+https://github.com/ChipaDevTeam/PocketOptionAPI.git")
+    ))
+
+    return AvailableBrokersResponse(brokers=brokers)
 
 
 # Cache global de pares para reduzir carga
