@@ -18,6 +18,6 @@ numpy==1.26.4
 # IQ Option dependencies
 websocket-client==1.6.4
 
-# Binomo API
-# Instalar com: pip install BinomoAPI
-BinomoAPI
+# Binomo API (instalada via git)
+# Instalar com: pip install git+https://github.com/ChipaDevTeam/BinomoAPI.git
+git+https://github.com/ChipaDevTeam/BinomoAPI.git
