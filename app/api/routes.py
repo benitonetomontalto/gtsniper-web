@@ -157,51 +157,47 @@ async def login(request: LoginRequest):
                 iq_option_message = str(e)
                 print(f"[LOGIN] ERRO ao conectar IQ Option: {e}")
 
-    # Pocket Option (via BrokerFactory)
-    elif broker_type.lower() == "pocketoption":
-        if hasattr(request, 'pocketoption_ssid') and request.pocketoption_ssid:
-            print(f"[LOGIN] Conectando ao Pocket Option com SSID")
+    # Binomo (via BrokerFactory)
+    elif broker_type.lower() == "binomo":
+        if hasattr(request, 'binomo_email') and request.binomo_email and hasattr(request, 'binomo_password') and request.binomo_password:
+            print(f"[LOGIN] Conectando ao Binomo com email: {request.binomo_email}")
 
             try:
                 # Criar broker via factory
-                broker = BrokerFactory.create_broker("pocketoption")
+                broker = BrokerFactory.create_broker("binomo")
                 if not broker:
-                    broker_message = "Pocket Option não disponível - biblioteca não instalada"
+                    broker_message = "Binomo não disponível - biblioteca não instalada"
                     print(f"[LOGIN] ERRO: {broker_message}")
                 else:
-                    # Conectar com SSID
+                    # Conectar com email + senha
+                    requested_account_type = getattr(request, "binomo_account_type", "PRACTICE")
                     credentials = {
-                        "ssid": request.pocketoption_ssid
+                        "email": request.binomo_email,
+                        "password": request.binomo_password,
+                        "account_type": requested_account_type
                     }
 
                     connected = await broker.connect(credentials)
                     broker_connected = connected
 
                     if connected:
-                        print("[LOGIN] OK. Conectado ao Pocket Option com sucesso!")
+                        print("[LOGIN] OK. Conectado ao Binomo com sucesso!")
 
                         # Obter saldo
                         broker_balance = await broker.get_balance()
+                        broker_account_type = requested_account_type
 
-                        # Mudar tipo de conta se especificado
-                        requested_account_type = getattr(request, "pocketoption_account_type", None)
-                        if requested_account_type:
-                            await broker.switch_account(requested_account_type)
-                            broker_account_type = requested_account_type
-                        else:
-                            broker_account_type = "PRACTICE"  # Default
-
-                        broker_message = f"Conectado ao Pocket Option. Saldo: ${broker_balance}"
+                        broker_message = f"Conectado ao Binomo. Saldo: ${broker_balance}"
 
                         # Armazenar broker instance
                         _broker_instances[request.username] = broker
                     else:
-                        broker_message = "Falha ao conectar - SSID inválido ou expirado"
+                        broker_message = "Falha ao conectar - email ou senha inválidos"
                         print(f"[LOGIN] ERRO: {broker_message}")
 
             except Exception as e:
                 broker_message = str(e)
-                print(f"[LOGIN] ERRO ao conectar Pocket Option: {e}")
+                print(f"[LOGIN] ERRO ao conectar Binomo: {e}")
 
     return TokenResponse(
         access_token=access_token,
@@ -243,20 +239,20 @@ async def get_available_brokers():
         description="Conecta via email e senha. Suporta contas PRACTICE e REAL."
     ))
 
-    # Pocket Option (verificar se biblioteca está disponível)
+    # Binomo (verificar se biblioteca está disponível)
     try:
-        from pocketoptionapi.stable_api import PocketOption
-        pocket_available = True
+        from BinomoAPI import BinomoAPI
+        binomo_available = True
     except ImportError:
-        pocket_available = False
+        binomo_available = False
 
     brokers.append(BrokerInfo(
-        broker_type="pocketoption",
-        name="Pocket Option",
-        available=pocket_available,
-        auth_type="ssid",
-        description="Conecta via SSID (Session ID do navegador). " +
-                   ("Disponível." if pocket_available else "Biblioteca não instalada - execute: pip install git+https://github.com/ChipaDevTeam/PocketOptionAPI.git")
+        broker_type="binomo",
+        name="Binomo",
+        available=binomo_available,
+        auth_type="email_password",
+        description="Conecta via email e senha. Suporta contas PRACTICE e REAL. " +
+                   ("Disponível." if binomo_available else "Biblioteca não instalada - execute: pip install BinomoAPI")
     ))
 
     return AvailableBrokersResponse(brokers=brokers)

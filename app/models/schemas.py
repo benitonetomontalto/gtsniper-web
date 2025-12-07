@@ -12,17 +12,18 @@ class LoginRequest(BaseModel):
     password: Optional[str] = None  # Senha opcional
     access_token: Optional[str] = None
 
-    # Broker selection (new multi-broker support)
-    broker_type: Optional[str] = Field(default="iqoption", description="Broker type: iqoption or pocketoption")
+    # Broker selection (multi-broker support)
+    broker_type: Optional[str] = Field(default="iqoption", description="Broker type: iqoption or binomo")
 
     # IQ Option credentials
     iqoption_email: Optional[str] = None
     iqoption_password: Optional[str] = None
     iqoption_account_type: Optional[str] = None
 
-    # Pocket Option credentials
-    pocketoption_ssid: Optional[str] = None
-    pocketoption_account_type: Optional[str] = None
+    # Binomo credentials
+    binomo_email: Optional[str] = None
+    binomo_password: Optional[str] = None
+    binomo_account_type: Optional[str] = None
 
 
 class TokenResponse(BaseModel):
